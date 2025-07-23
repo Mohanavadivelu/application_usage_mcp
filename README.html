@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="modular-application-usage-mcp-system">Modular Application Usage MCP System</h1>
+<p>This project is a modular, message-oriented system for logging and retrieving application usage data. It is composed of three core, decoupled modules: a database manager, an MCP (Model Context Protocol) messaging layer, and a future-proof structure for adding frontends.</p>
+<h2 id="architecture">Architecture</h2>
+<p>The system is designed with loose coupling and high cohesion in mind. Each module operates independently and communicates only through the MCP layer. This makes the system scalable, testable, and easy to maintain.</p>
+<h3 id="architectural-benefits-mcp-vs-monolithic">Architectural Benefits (MCP vs. Monolithic)</h3>
+<p>This section explains the trade-offs of using the MCP architecture for this project compared to a traditional, monolithic design.</p>
+<h4 id="monolithic-approach-without-mcp">Monolithic Approach (Without MCP)</h4>
+<p>In a monolithic design, a frontend would directly import and call the <code>DatabaseManager</code>.</p>
+<ul>
+<li><strong>Advantages</strong>:
+<ul>
+<li><strong>Simplicity</strong>: Fewer moving parts and less initial setup for a very small project.</li>
+</ul>
+</li>
+<li><strong>Disadvantages</strong>:
+<ul>
+<li><strong>Tight Coupling</strong>: The frontend is directly dependent on the database logic. Any change to the <code>DatabaseManager</code> class could require changes to the frontend.</li>
+<li><strong>Poor Scalability</strong>: It is difficult to add new, independent services (e.g., a notification service) or distribute components across different machines.</li>
+<li><strong>Difficult to Test</strong>: The frontend and database logic cannot be easily tested in isolation.</li>
+<li><strong>Technology Lock-in</strong>: The frontend must be written in a language compatible with the backend (e.g., both in Python).</li>
+</ul>
+</li>
+</ul>
+<h4 id="modular-approach-with-mcp">Modular Approach (With MCP)</h4>
+<p>In our current architecture, modules communicate via standardized JSON messages, with no direct dependencies.</p>
+<ul>
+<li><strong>Advantages</strong>:
+<ul>
+<li><strong>Loose Coupling</strong>: Modules are completely independent. The database can be swapped (e.g., from SQLite to PostgreSQL) with zero changes to any other module.</li>
+<li><strong>High Scalability</strong>: New modules can be added easily. They just need to connect to the MCP server and handle specific messages.</li>
+<li><strong>Improved Testability</strong>: Each module can be tested independently.</li>
+<li><strong>Language Agnostic</strong>: A new frontend could be written in any language (e.g., JavaScript, C#) as long as it can send JSON over a TCP socket.</li>
+</ul>
+</li>
+<li><strong>Disadvantages</strong>:
+<ul>
+<li><strong>Increased Complexity</strong>: More initial setup and boilerplate code are required.</li>
+<li><strong>Overhead</strong>: A small performance overhead exists due to network communication and JSON processing compared to a direct in-process function call.</li>
+</ul>
+</li>
+</ul>
+<h3 id="component-responsibilities-and-data-flow">Component Responsibilities and Data Flow</h3>
+<p>This section details the role of each component in processing a request.</p>
+<h4 id="block-diagram">Block Diagram</h4>
+<pre class="hljs"><code><div>@startuml
+!theme plain
+
+package &quot;Application Modules&quot; {
+  [Frontend Module] as Frontend
+  [Database Module] as DB
+  [MCP Server] as Server
+  [MCP Client] as Client
+}
+
+database &quot;SQLite DB&quot; as SQLite
+
+Frontend ..&gt; Client : uses
+Client ..&gt; Server : sends (JSON String)
+Server ..&gt; DB : calls (Python Dictionary)
+DB ..&gt; SQLite : executes (SQL Query)
+
+@enduml
+</div></code></pre>
+<h4 id="step-by-step-data-flow">Step-by-Step Data Flow</h4>
+<ol>
+<li>
+<p><strong>Frontend Module (The Initiator)</strong></p>
+<ul>
+<li>The process begins in a client module (e.g., a future web frontend or the current test scripts).</li>
+<li>It constructs a standard Python dictionary representing the desired action (e.g., <code>{'module': 'database', 'command': 'create_usage_log', ...}</code>).</li>
+<li>It passes this dictionary to an instance of the <code>MCPClient</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>MCP Client (The Messenger)</strong></p>
+<ul>
+<li><strong>Responsibility</strong>: To handle the mechanics of communication.</li>
+<li>It takes the Python dictionary.</li>
+<li>It serializes the dictionary into a JSON formatted string.</li>
+<li>It opens a TCP network connection to the <code>MCPServer</code>.</li>
+<li>It sends the JSON string over the network and waits for a response.</li>
+</ul>
+</li>
+<li>
+<p><strong>MCP Server (The Router)</strong></p>
+<ul>
+<li><strong>Responsibility</strong>: To listen for requests and delegate tasks.</li>
+<li>It receives the JSON string from the network connection.</li>
+<li>It deserializes the JSON back into a Python dictionary.</li>
+<li>It inspects the <code>module</code> and <code>command</code> keys to understand the request.</li>
+<li>It calls the appropriate method on its internal instance of the <code>DatabaseManager</code>, passing the <code>payload</code> dictionary.</li>
+</ul>
+</li>
+<li>
+<p><strong>Database Module (The Worker)</strong></p>
+<ul>
+<li><strong>Responsibility</strong>: To execute the core business logic.</li>
+<li>It receives a simple Python dictionary from the <code>MCPServer</code>. It has no knowledge of the network, JSON, or where the request came from.</li>
+<li>It performs the requested database operation (e.g., constructs and executes an SQL <code>INSERT</code> statement).</li>
+<li>It returns a simple Python object (like a <code>list</code> or <code>int</code>) to the <code>MCPServer</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>The Response Journey</strong></p>
+<ul>
+<li>The <code>MCPServer</code> takes the return value from the <code>DatabaseManager</code>, wraps it in a response dictionary, and sends it back to the <code>MCPClient</code> as a JSON string.</li>
+<li>The <code>MCPClient</code> receives the JSON response, deserializes it into a Python dictionary, and returns it to the original caller (the Frontend Module).</li>
+</ul>
+</li>
+</ol>
+<h3 id="class-diagram">Class Diagram</h3>
+<pre class="hljs"><code><div>@startuml
+skinparam classAttributeIconSize 0
+
+class MCPServer {
+  +host: str
+  +port: int
+  +db_manager: DatabaseManager
+  +start()
+  +shutdown()
+  +handle_client()
+  +process_request()
+}
+
+class MCPClient {
+  +host: str
+  +port: int
+  +send_request(data)
+}
+
+class DatabaseManager {
+  +db_path: str
+  +conn: Connection
+  +connect()
+  +disconnect()
+  +initialize_database()
+  +create_usage_log(data)
+  +get_usage_logs(filters)
+  +update_usage_log(id, updates)
+  +delete_usage_log(id)
+}
+
+package &quot;config&quot; {
+  class settings &lt;&lt;Module&gt;&gt; {
+    +DB_NAME
+    +DB_PATH
+    +SCHEMA_PATH
+    +MCP_HOST
+    +MCP_PORT
+  }
+}
+
+MCPServer &quot;1&quot; *-- &quot;1&quot; DatabaseManager
+MCPClient ..&gt; MCPServer
+MCPServer ..&gt; settings
+MCPClient ..&gt; settings
+DatabaseManager ..&gt; settings
+
+@enduml
+</div></code></pre>
+<h3 id="sequence-diagram">Sequence Diagram</h3>
+<pre class="hljs"><code><div>@startuml
+title Data Transformation Flow
+
+actor Client as &quot;Frontend/Test&quot;
+participant MCPClient
+participant MCPServer
+participant DatabaseManager
+
+Client -&gt; MCPClient : send_request(dict)
+note right of Client : Python Dictionary
+
+activate MCPClient
+MCPClient -&gt; MCPServer : send(json_string)
+note left of MCPServer : JSON over TCP
+deactivate MCPClient
+
+activate MCPServer
+MCPServer -&gt; DatabaseManager : command(payload_dict)
+note right of MCPServer : Python Dictionary
+deactivate MCPServer
+
+activate DatabaseManager
+DatabaseManager -&gt; DatabaseManager : Executes SQL
+note right of DatabaseManager : SQL Query
+DatabaseManager --&gt; MCPServer : returns result
+deactivate DatabaseManager
+
+activate MCPServer
+MCPServer --&gt; MCPClient : returns json_string
+deactivate MCPServer
+
+activate MCPClient
+MCPClient --&gt; Client : returns dict
+deactivate MCPClient
+
+@enduml
+</div></code></pre>
+<h2 id="project-structure">Project Structure</h2>
+<pre class="hljs"><code><div>application_usage_mcp/
+|-- config/
+|   |-- __init__.py
+|   |-- settings.py         # Centralized configuration
+|-- database/
+|   |-- __init__.py
+|   |-- db_manager.py       # Handles all database operations
+|   |-- schema.sql          # SQL schema for the database
+|-- mcp/
+|   |-- __init__.py
+|   |-- mcp_client.py       # Client for sending requests to the server
+|   |-- mcp_server.py       # Core message-passing server
+|-- tests/
+|   |-- __init__.py
+|   |-- test_db_manager.py  # Unit tests for the database
+|   |-- test_mcp_integration.py # End-to-end integration test
+|-- .gitignore              # Git ignore file
+|-- main.py                 # Main entry point to start the server
+|-- README.md               # This file
+</div></code></pre>
+<h2 id="setup-and-usage">Setup and Usage</h2>
+<h3 id="1-prerequisites">1. Prerequisites</h3>
+<ul>
+<li>Python 3.10+</li>
+</ul>
+<h3 id="2-installation">2. Installation</h3>
+<p>No external libraries are required for the core modules.</p>
+<h3 id="3-configuration">3. Configuration</h3>
+<p>All settings can be modified in <code>config/settings.py</code>.</p>
+<h3 id="4-running-the-application">4. Running the Application</h3>
+<p><strong>Start the Server:</strong>
+Open a terminal and run:</p>
+<pre class="hljs"><code><div>python main.py
+</div></code></pre>
+<p>The server will start and listen on the host and port defined in the configuration.</p>
+<h3 id="5-running-tests">5. Running Tests</h3>
+<p><strong>Run all tests:</strong>
+To ensure the system is working correctly, run the test suite from the project root directory:</p>
+<pre class="hljs"><code><div>python -m unittest discover tests
+</div></code></pre>
+<p>This command will automatically discover and run all unit and integration tests.</p>
+
+</body>
+</html>
