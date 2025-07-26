@@ -24,6 +24,12 @@ SERVER_VERSION = "1.0.0"
 
 # MCP Message Types
 class MessageType:
+    """
+    MCP Protocol Message Types.
+    
+    Defines the standard message types used in the Model Context Protocol.
+    These constants ensure consistent message handling across the server.
+    """
     INITIALIZE = "initialize"
     INITIALIZED = "initialized"
     TOOLS_LIST = "tools/list"
@@ -34,14 +40,69 @@ class MessageType:
 
 # Error Codes
 class ErrorCode:
-    PARSE_ERROR = -32700
-    INVALID_REQUEST = -32600
-    METHOD_NOT_FOUND = -32601
-    INVALID_PARAMS = -32602
-    INTERNAL_ERROR = -32603
+    """
+    JSON-RPC 2.0 Error Codes.
+    
+    Standard error codes used in JSON-RPC responses to indicate
+    different types of errors during request processing.
+    """
+    PARSE_ERROR = -32700      # Invalid JSON was received
+    INVALID_REQUEST = -32600  # The JSON sent is not a valid Request object
+    METHOD_NOT_FOUND = -32601 # The method does not exist / is not available
+    INVALID_PARAMS = -32602   # Invalid method parameter(s)
+    INTERNAL_ERROR = -32603   # Internal JSON-RPC error
 
 class MCPServer:
+    """
+    Model Context Protocol (MCP) Server Implementation.
+    
+    This class implements a full MCP server following the MCP 2024-11-05 specification.
+    It provides a standardized interface for AI assistants to interact with application
+    usage data through well-defined tools and resources.
+    
+    Key Features:
+    - Full MCP protocol compliance with JSON-RPC 2.0
+    - Async TCP server for handling multiple concurrent connections
+    - Database operations exposed as MCP tools
+    - Usage statistics exposed as MCP resources
+    - Comprehensive error handling and logging
+    - Input validation and schema compliance
+    - Automatic database initialization
+    
+    The server exposes the following tools:
+    - create_usage_log: Create new usage log entries
+    - get_usage_logs: Retrieve usage logs with filtering
+    - update_usage_log: Update existing log entries
+    - delete_usage_log: Delete log entries
+    - get_unique_users: Get list of unique users
+    - get_unique_applications: Get list of unique applications
+    - get_unique_platforms: Get list of unique platforms
+    
+    The server exposes the following resources:
+    - usage://stats: Real-time usage statistics
+    
+    Attributes:
+        host (str): Server bind address
+        port (int): Server bind port
+        db_manager (DatabaseManager): Database interface
+        initialized (bool): Whether server initialization is complete
+        client_capabilities (dict): Capabilities reported by connected clients
+        tools (dict): Available tools with their schemas
+        resources (dict): Available resources with their metadata
+    
+    Example:
+        server = MCPServer(host="127.0.0.1", port=58888)
+        await server.start()
+    """
+    
     def __init__(self, host=settings.MCP_HOST, port=settings.MCP_PORT):
+        """
+        Initialize MCP server with database and tool definitions.
+        
+        Args:
+            host (str): Server bind address. Defaults to settings.MCP_HOST
+            port (int): Server bind port. Defaults to settings.MCP_PORT
+        """
         self.host = host
         self.port = port
         self.db_manager = DatabaseManager()
@@ -49,7 +110,11 @@ class MCPServer:
         self.initialized = False
         self.client_capabilities = {}
         
-        # Define available tools
+        # Define available tools with JSON schemas for input validation
+        # Each tool corresponds to a database operation and includes:
+        # - name: Tool identifier
+        # - description: Human-readable description
+        # - inputSchema: JSON schema for parameter validation
         self.tools = {
             "create_usage_log": {
                 "name": "create_usage_log",
@@ -139,7 +204,13 @@ class MCPServer:
             }
         }
         
-        # Define available resources
+        # Define available resources with metadata
+        # Resources provide read-only access to server data and state
+        # Each resource includes:
+        # - uri: Unique resource identifier
+        # - name: Human-readable name
+        # - description: Resource description
+        # - mimeType: Content type of the resource
         self.resources = {
             "usage_stats": {
                 "uri": "usage://stats",
@@ -150,6 +221,27 @@ class MCPServer:
         }
 
     async def handle_client(self, reader, writer):
+        """
+        Handle incoming client connections.
+        
+        Manages the lifecycle of a client connection, including:
+        - Reading incoming messages
+        - Processing JSON-RPC requests
+        - Sending responses
+        - Error handling and logging
+        - Connection cleanup
+        
+        This method runs in a loop for each connected client and handles
+        multiple requests over a single connection.
+        
+        Args:
+            reader (asyncio.StreamReader): Stream for reading client data
+            writer (asyncio.StreamWriter): Stream for writing responses
+            
+        Example:
+            # This method is called automatically by the TCP server
+            # when a new client connects
+        """
         addr = writer.get_extra_info('peername')
         logger.info(f"New MCP connection from {addr}")
         
@@ -194,24 +286,63 @@ class MCPServer:
             logger.info(f"Connection {addr} closed")
 
     async def process_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Process incoming MCP message according to JSON-RPC 2.0 specification"""
+        """
+        Process incoming JSON-RPC messages and route to appropriate handlers.
+        
+        This is the main message dispatcher that routes incoming requests
+        to the appropriate handler based on the message method. Implements
+        the MCP protocol specification for JSON-RPC 2.0 message handling.
+        
+        The method enforces proper initialization order - all methods except
+        'initialize' require the server to be initialized first.
+        
+        Supported MCP protocol methods:
+        - initialize: Server initialization handshake
+        - tools/list: List available tools
+        - tools/call: Execute a specific tool
+        - resources/list: List available resources
+        - resources/read: Read resource content
+        - ping: Server health check
+        
+        Args:
+            message (Dict[str, Any]): JSON-RPC message containing:
+                - jsonrpc (str): Protocol version (should be "2.0")
+                - method (str): RPC method name
+                - params (dict, optional): Method parameters
+                - id (str/int, optional): Request identifier
+                
+        Returns:
+            Optional[Dict[str, Any]]: JSON-RPC response with result or error,
+                                     None for notification messages
+                
+        Example:
+            message = {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "create_usage_log", "arguments": {...}},
+                "id": "req-1"
+            }
+            response = await process_message(message)
+        """
         message_id = message.get("id")
         method = message.get("method")
         params = message.get("params", {})
         
+        # Validate message structure - method is required
         if not method:
             return self.create_error_response(message_id, ErrorCode.INVALID_REQUEST, "Missing method")
         
-        # Handle initialization
+        # Handle initialization - this is the only method allowed before initialization
         if method == MessageType.INITIALIZE:
             return await self.handle_initialize(message_id, params)
         
+        # Ensure server is initialized before processing other methods
         if not self.initialized and method != MessageType.INITIALIZE:
             return self.create_error_response(
                 message_id, ErrorCode.INVALID_REQUEST, "Server not initialized"
             )
         
-        # Handle other methods
+        # Route to appropriate method handlers
         if method == MessageType.TOOLS_LIST:
             return await self.handle_tools_list(message_id)
         elif method == MessageType.TOOLS_CALL:
@@ -228,27 +359,57 @@ class MCPServer:
             )
 
     async def handle_initialize(self, message_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle MCP initialization handshake"""
+        """
+        Handle MCP initialization handshake.
+        
+        Processes the client's initialization request and establishes the
+        MCP protocol session. This must be the first message sent by any
+        client before other operations can be performed.
+        
+        Validates the protocol version and stores client capabilities for
+        future reference. Sets the server to initialized state on success.
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            params (Dict[str, Any]): Initialization parameters containing:
+                - protocolVersion (str): Client's protocol version
+                - capabilities (dict): Client capability declarations
+                - clientInfo (dict, optional): Client information
+                
+        Returns:
+            Dict[str, Any]: JSON-RPC response with server capabilities and info
+            
+        Example:
+            params = {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {"tools": {}, "resources": {}},
+                "clientInfo": {"name": "test-client", "version": "1.0.0"}
+            }
+            response = await handle_initialize("init-1", params)
+        """
         self.client_capabilities = params.get("capabilities", {})
         protocol_version = params.get("protocolVersion")
         
+        # Validate protocol version compatibility
         if protocol_version != MCP_PROTOCOL_VERSION:
             return self.create_error_response(
                 message_id, ErrorCode.INVALID_PARAMS, 
                 f"Unsupported protocol version: {protocol_version}"
             )
         
+        # Mark server as initialized
         self.initialized = True
         logger.info("MCP initialization completed successfully")
         
+        # Return server capabilities and information
         return {
             "jsonrpc": "2.0",
             "id": message_id,
             "result": {
                 "protocolVersion": MCP_PROTOCOL_VERSION,
                 "capabilities": {
-                    "tools": {},
-                    "resources": {}
+                    "tools": {},    # Tool capabilities (currently empty)
+                    "resources": {} # Resource capabilities (currently empty)
                 },
                 "serverInfo": {
                     "name": SERVER_NAME,
@@ -258,7 +419,37 @@ class MCPServer:
         }
 
     async def handle_tools_list(self, message_id: str) -> Dict[str, Any]:
-        """Return list of available tools"""
+        """
+        Return list of available tools.
+        
+        Provides the client with metadata about all available tools that
+        can be executed via the tools/call method. Each tool definition
+        includes its name, description, and input schema for validation.
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            
+        Returns:
+            Dict[str, Any]: JSON-RPC response containing:
+                - tools: List of tool definitions with metadata
+                
+        Example:
+            response = await handle_tools_list("list-1")
+            # Returns: {
+            #     "jsonrpc": "2.0",
+            #     "id": "list-1",
+            #     "result": {
+            #         "tools": [
+            #             {
+            #                 "name": "create_usage_log",
+            #                 "description": "Create a new usage log entry",
+            #                 "inputSchema": {...}
+            #             },
+            #             ...
+            #         ]
+            #     }
+            # }
+        """
         tools_list = list(self.tools.values())
         return {
             "jsonrpc": "2.0",
@@ -269,17 +460,57 @@ class MCPServer:
         }
 
     async def handle_tools_call(self, message_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a tool call"""
+        """
+        Execute a tool call with the provided arguments.
+        
+        Validates the tool name and executes the corresponding database
+        operation. Each tool maps to a specific database manager method
+        and returns structured results in MCP format.
+        
+        Available tools:
+        - create_usage_log: Create new usage log entry
+        - get_usage_logs: Retrieve usage logs with optional filters
+        - update_usage_log: Update existing usage log
+        - delete_usage_log: Delete usage log by ID
+        - get_unique_users: Get list of unique users
+        - get_unique_applications: Get list of unique applications
+        - get_unique_platforms: Get list of unique platforms
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            params (Dict[str, Any]): Tool execution parameters containing:
+                - name (str): Tool name to execute
+                - arguments (dict): Tool-specific arguments
+                
+        Returns:
+            Dict[str, Any]: JSON-RPC response with tool execution results
+            
+        Raises:
+            Exception: Database operation errors or invalid arguments
+            
+        Example:
+            params = {
+                "name": "create_usage_log",
+                "arguments": {
+                    "user": "john_doe",
+                    "application": "Chrome",
+                    "date": "2024-01-15",
+                    "duration": 3600
+                }
+            }
+            response = await handle_tools_call("call-1", params)
+        """
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         
+        # Validate tool existence
         if tool_name not in self.tools:
             return self.create_error_response(
                 message_id, ErrorCode.INVALID_PARAMS, f"Unknown tool: {tool_name}"
             )
         
         try:
-            # Execute the tool
+            # Route to appropriate database manager method
             if tool_name == "create_usage_log":
                 result = self.db_manager.create_usage_log(arguments)
             elif tool_name == "get_usage_logs":
@@ -303,6 +534,7 @@ class MCPServer:
                     message_id, ErrorCode.INTERNAL_ERROR, f"Tool implementation missing: {tool_name}"
                 )
             
+            # Format result in MCP content structure
             return {
                 "jsonrpc": "2.0",
                 "id": message_id,
@@ -323,7 +555,37 @@ class MCPServer:
             )
 
     async def handle_resources_list(self, message_id: str) -> Dict[str, Any]:
-        """Return list of available resources"""
+        """
+        Return list of available resources.
+        
+        Provides the client with metadata about all available resources that
+        can be read via the resources/read method. Resources are read-only
+        data sources providing server state and statistics.
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            
+        Returns:
+            Dict[str, Any]: JSON-RPC response containing:
+                - resources: List of resource definitions with metadata
+                
+        Example:
+            response = await handle_resources_list("list-1")
+            # Returns: {
+            #     "jsonrpc": "2.0",
+            #     "id": "list-1",
+            #     "result": {
+            #         "resources": [
+            #             {
+            #                 "uri": "usage://stats",
+            #                 "name": "Usage Statistics",
+            #                 "description": "Current usage statistics and metrics",
+            #                 "mimeType": "application/json"
+            #             }
+            #         ]
+            #     }
+            # }
+        """
         resources_list = list(self.resources.values())
         return {
             "jsonrpc": "2.0",
@@ -334,11 +596,46 @@ class MCPServer:
         }
 
     async def handle_resources_read(self, message_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Read a resource"""
+        """
+        Read the content of a specific resource.
+        
+        Retrieves and returns the content of the requested resource identified
+        by its URI. Currently supports usage statistics resource that provides
+        real-time database metrics.
+        
+        Supported resources:
+        - usage://stats: Current usage statistics and database metrics
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            params (Dict[str, Any]): Resource read parameters containing:
+                - uri (str): Resource URI to read
+                
+        Returns:
+            Dict[str, Any]: JSON-RPC response with resource content
+            
+        Raises:
+            Exception: Database access errors or resource generation failures
+            
+        Example:
+            params = {"uri": "usage://stats"}
+            response = await handle_resources_read("read-1", params)
+            # Returns: {
+            #     "jsonrpc": "2.0", 
+            #     "id": "read-1",
+            #     "result": {
+            #         "contents": [{
+            #             "uri": "usage://stats",
+            #             "mimeType": "application/json",
+            #             "text": "{\"total_logs\": 42, ...}"
+            #         }]
+            #     }
+            # }
+        """
         uri = params.get("uri")
         
         if uri == "usage://stats":
-            # Generate usage statistics
+            # Generate real-time usage statistics
             try:
                 all_logs = self.db_manager.get_usage_logs()
                 stats = {
@@ -370,7 +667,27 @@ class MCPServer:
             )
 
     async def handle_ping(self, message_id: str) -> Dict[str, Any]:
-        """Handle ping request"""
+        """
+        Handle ping request for server health check.
+        
+        Responds to client ping requests to verify server connectivity and
+        responsiveness. This is a simple health check mechanism that
+        requires no parameters and returns an empty result.
+        
+        Args:
+            message_id (str): Request identifier for response matching
+            
+        Returns:
+            Dict[str, Any]: JSON-RPC response with empty result indicating success
+            
+        Example:
+            response = await handle_ping("ping-1")
+            # Returns: {
+            #     "jsonrpc": "2.0",
+            #     "id": "ping-1", 
+            #     "result": {}
+            # }
+        """
         return {
             "jsonrpc": "2.0",
             "id": message_id,
@@ -378,7 +695,42 @@ class MCPServer:
         }
 
     def create_error_response(self, message_id: Optional[str], code: int, message: str) -> Dict[str, Any]:
-        """Create a JSON-RPC error response"""
+        """
+        Create a JSON-RPC 2.0 compliant error response.
+        
+        Formats error responses according to the JSON-RPC 2.0 specification,
+        which is required by the MCP protocol. Error responses are used to
+        communicate failures back to the client.
+        
+        Standard JSON-RPC error codes:
+        - -32700: Parse error (invalid JSON)
+        - -32600: Invalid request (malformed JSON-RPC)
+        - -32601: Method not found
+        - -32602: Invalid params
+        - -32603: Internal error
+        
+        Args:
+            message_id (Optional[str]): The ID from the original request,
+                                       None for parse errors
+            code (int): Standard JSON-RPC error code
+            message (str): Human-readable error description
+            
+        Returns:
+            Dict[str, Any]: JSON-RPC error response with:
+                - jsonrpc: Protocol version "2.0"
+                - id: Original request ID or null
+                - error: Error object with code and message
+                
+        Example:
+            error_response = create_error_response(
+                "req-1", -32601, "Method not found"
+            )
+            # Returns: {
+            #     "jsonrpc": "2.0",
+            #     "id": "req-1", 
+            #     "error": {"code": -32601, "message": "Method not found"}
+            # }
+        """
         return {
             "jsonrpc": "2.0",
             "id": message_id,
@@ -389,7 +741,26 @@ class MCPServer:
         }
 
     async def start(self):
-        """Start the MCP server"""
+        """
+        Start the MCP server and begin listening for client connections.
+        
+        Creates an asyncio TCP server that listens for incoming MCP client
+        connections. Each client connection is handled concurrently by the
+        handle_client method. The server will continue running until stopped.
+        
+        The server logs important information including:
+        - Listening address and port
+        - MCP protocol version
+        - Available tools for debugging
+        
+        Raises:
+            OSError: If the port is already in use or other network errors
+            Exception: For other server startup failures
+            
+        Example:
+            server = MCPServer()
+            await server.start()  # Server starts listening
+        """
         server = await asyncio.start_server(
             self.handle_client, self.host, self.port)
 
@@ -402,13 +773,45 @@ class MCPServer:
             await server.serve_forever()
 
     async def shutdown(self):
-        """Shutdown the MCP server"""
+        """
+        Shutdown the MCP server gracefully.
+        
+        Performs cleanup operations when the server is shutting down:
+        - Closes database connections
+        - Logs shutdown status
+        - Releases resources
+        
+        This method should be called when the server receives a shutdown
+        signal or when the application is terminating.
+        
+        Example:
+            try:
+                await server.start()
+            finally:
+                await server.shutdown()
+        """
         logger.info("Shutting down MCP server...")
         self.db_manager.disconnect()
 
 
 async def main():
-    """Main entry point for the MCP server"""
+    """
+    Main entry point for the MCP server application.
+    
+    Creates and starts the MCP server with proper error handling and
+    graceful shutdown. Handles KeyboardInterrupt (Ctrl+C) for clean
+    server termination.
+    
+    The server will:
+    1. Initialize the MCPServer instance
+    2. Start listening for connections
+    3. Handle shutdown signals gracefully
+    4. Clean up resources on exit
+    
+    Example:
+        python mcp_server.py  # Starts the server
+        # Press Ctrl+C to shutdown gracefully
+    """
     server = MCPServer()
     try:
         await server.start()

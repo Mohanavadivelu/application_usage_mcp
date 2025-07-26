@@ -379,7 +379,46 @@ code {
 <li><strong>Comprehensive Testing</strong>: Full test suite ensuring protocol compliance</li>
 </ul>
 <hr>
-<h2 id="2-folder-structure">2. Folder Structure</h2>
+<h2 id="2-quick-start-guide">2. Quick Start Guide</h2>
+<h3 id="%F0%9F%9A%80-interactive-client-recommended">🚀 Interactive Client (Recommended)</h3>
+<p>The easiest way to test and explore all MCP functionality is through the interactive client:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># 1. Start the MCP server (in one terminal)</span>
+<span class="hljs-built_in">cd</span> examples
+python start_server.py
+
+<span class="hljs-comment"># 2. Run the interactive client (in another terminal)</span>
+<span class="hljs-built_in">cd</span> examples
+python interactive_client.py
+</div></code></pre>
+<p>The interactive client provides a menu-driven interface to test all MCP tools:</p>
+<pre class="hljs"><code><div>🛠️  MCP CLIENT INTERACTIVE TOOL TESTER
+============================================================
+1️⃣  Create Usage Log           6️⃣  Get Unique Users
+2️⃣  Get Usage Logs (All)       7️⃣  Get Unique Applications
+3️⃣  Get Usage Logs (Filtered)  8️⃣  Get Unique Platforms
+4️⃣  Update Usage Log           9️⃣  Get Usage Statistics
+5️⃣  Delete Usage Log           🔟  Test Duration Aggregation
+📊  Show All Data Summary       🧪  Run All Tests (Auto)
+❌  Exit
+============================================================
+</div></code></pre>
+<p><strong>Features:</strong></p>
+<ul>
+<li><strong>Smart Defaults</strong>: Quick testing with sensible default values</li>
+<li><strong>Input Validation</strong>: Type checking and format validation</li>
+<li><strong>Duration Aggregation</strong>: Test automatic duration aggregation for duplicates</li>
+<li><strong>Comprehensive Testing</strong>: Automated test suite for all functionality</li>
+<li><strong>User-Friendly</strong>: Clear prompts and formatted output</li>
+</ul>
+<h3 id="%F0%9F%93%8B-manual-testing">📋 Manual Testing</h3>
+<p>The interactive client includes comprehensive automated testing options (menu option 🧪).</p>
+<h3 id="%F0%9F%93%9A-documentation">📚 Documentation</h3>
+<ul>
+<li><strong>Interactive Interface</strong>: The <code>interactive_client.py</code> includes built-in help and guidance</li>
+<li><strong>Architecture Details</strong>: Continue reading this README for technical details</li>
+</ul>
+<hr>
+<h2 id="3-folder-structure">3. Folder Structure</h2>
 <pre class="hljs"><code><div>application_usage_mcp/
 ├── README.md                           # This documentation file
 ├── requirements.txt                    # Python dependencies
@@ -409,7 +448,7 @@ code {
 │
 └── examples/                          # Usage examples and utilities
     ├── start_server.py                # Server startup script
-    └── client_usage.py                # Client usage examples
+    └── interactive_client.py          # Interactive CLI for testing all tools
 </div></code></pre>
 <h3 id="folder-purposes">Folder Purposes:</h3>
 <ul>
@@ -420,7 +459,7 @@ code {
 <li><strong><code>examples/</code></strong>: Practical usage examples and helper scripts</li>
 </ul>
 <hr>
-<h2 id="3-documentation">3. Documentation</h2>
+<h2 id="4-documentation">4. Documentation</h2>
 <h3 id="core-files-documentation">Core Files Documentation</h3>
 <h4 id="mainpy"><code>main.py</code></h4>
 <p><strong>Purpose</strong>: Application entry point that initializes and starts the MCP server.</p>
@@ -499,7 +538,7 @@ code {
 <td><code>log_date</code></td>
 <td>TEXT</td>
 <td>NOT NULL</td>
-<td>ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)</td>
+<td>Date in YYYY-MM-DD format</td>
 </tr>
 <tr>
 <td><code>legacy_app</code></td>
@@ -555,7 +594,7 @@ code {
   <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,
   <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,
   <span class="hljs-attr">"application_version"</span>: <span class="hljs-string">"119.0.6045.105"</span>,
-  <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-07-27T10:30:00Z"</span>,
+  <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-07-27"</span>,
   <span class="hljs-attr">"legacy_app"</span>: <span class="hljs-literal">false</span>,
   <span class="hljs-attr">"duration_seconds"</span>: <span class="hljs-number">3600</span>
 }
@@ -607,7 +646,7 @@ code {
 - validate_resource_read_request(): Validates resource access requests
 </div></code></pre>
 <hr>
-<h2 id="4-architecture">4. Architecture</h2>
+<h2 id="5-architecture">5. Architecture</h2>
 <h3 id="system-architecture-overview">System Architecture Overview</h3>
 <p>The system follows a <strong>layered architecture</strong> with clear separation of concerns:</p>
 <pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
@@ -636,10 +675,10 @@ code {
 │                  DATABASE LAYER                              │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │               DatabaseManager                           │ │
-│  │  ┌─────────────┐  ┌─────────────────┐                  │ │
-│  │  │   CRUD      │  │   Connection    │                  │ │
-│  │  │ Operations  │  │   Manager       │                  │ │
-│  │  └─────────────┘  └─────────────────┘                  │ │
+│  │  ┌─────────────┐  ┌─────────────────┐                   │ │
+│  │  │   CRUD      │  │   Connection    │                   │ │
+│  │  │ Operations  │  │   Manager       │                   │ │
+│  │  └─────────────┘  └─────────────────┘                   │ │
 │  └─────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
                                 │
@@ -963,6 +1002,55 @@ pip install jsonschema==4.17.0 pytest==7.0.0 pytest-asyncio==0.21.0
    │   ├── mimeType: &quot;application/json&quot;
    │   └── text: JSON-formatted statistics
    └── Client receives statistics data
+</div></code></pre>
+<h3 id="77-new-features-duration-aggregation--unique-values">7.7 New Features (Duration Aggregation &amp; Unique Values)</h3>
+<h4 id="771-duration-aggregation-flow">7.7.1 Duration Aggregation Flow</h4>
+<pre class="hljs"><code><div>1. Create Usage Log with Duplicate Detection
+   ├── Client sends 'tools/call' request with log data
+   ├── DatabaseManager.create_usage_log() called
+   │   ├── Check for existing record with same date, user, application_name
+   │   ├── If duplicate found:
+   │   │   ├── Retrieve existing duration_seconds
+   │   │   ├── Add new duration to existing duration
+   │   │   ├── Update record with new total duration
+   │   │   ├── Update other fields (monitor_app_version, platform, etc.)
+   │   │   └── Return existing record ID
+   │   └── If no duplicate:
+   │       ├── Insert new record as normal
+   │       └── Return new record ID
+   └── Client receives log ID (same ID if aggregated)
+</div></code></pre>
+<h4 id="772-unique-values-retrieval-flow">7.7.2 Unique Values Retrieval Flow</h4>
+<pre class="hljs"><code><div>1. Get Unique Users
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: &quot;get_unique_users&quot;
+   ├── DatabaseManager.get_unique_users() called
+   │   ├── Execute: SELECT DISTINCT user FROM usage_data ORDER BY user
+   │   └── Return sorted list of unique users
+   └── Client receives: [&quot;alice&quot;, &quot;bob&quot;, &quot;john_doe&quot;]
+
+2. Get Unique Applications  
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: &quot;get_unique_applications&quot;
+   ├── DatabaseManager.get_unique_applications() called
+   │   ├── Execute: SELECT DISTINCT application_name FROM usage_data ORDER BY application_name
+   │   └── Return sorted list of unique applications
+   └── Client receives: [&quot;chrome.exe&quot;, &quot;firefox.exe&quot;, &quot;vscode.exe&quot;]
+
+3. Get Unique Platforms
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: &quot;get_unique_platforms&quot; 
+   ├── DatabaseManager.get_unique_platforms() called
+   │   ├── Execute: SELECT DISTINCT platform FROM usage_data ORDER BY platform
+   │   └── Return sorted list of unique platforms
+   └── Client receives: [&quot;Linux&quot;, &quot;Windows&quot;, &quot;macOS&quot;]
+</div></code></pre>
+<h4 id="773-updated-data-format">7.7.3 Updated Data Format</h4>
+<pre class="hljs"><code><div>- log_date format changed from ISO 8601 timestamp to YYYY-MM-DD
+- Composite indexes added for better DISTINCT query performance:
+  ├── idx_user_date (user, log_date)
+  ├── idx_app_platform (application_name, platform)  
+  └── idx_platform_date (platform, log_date)
 </div></code></pre>
 <h3 id="78-error-handling-flow">7.8 Error Handling Flow</h3>
 <pre class="hljs"><code><div>1. Error Scenarios
