@@ -15,7 +15,56 @@ The **Application Usage MCP System** is a production-ready implementation of the
 
 ---
 
-## 2. Folder Structure
+## 2. Quick Start Guide
+
+### 🚀 Interactive Client (Recommended)
+
+The easiest way to test and explore all MCP functionality is through the interactive client:
+
+```bash
+# 1. Start the MCP server (in one terminal)
+cd examples
+python start_server.py
+
+# 2. Run the interactive client (in another terminal)
+cd examples
+python interactive_client.py
+```
+
+The interactive client provides a menu-driven interface to test all MCP tools:
+
+```
+🛠️  MCP CLIENT INTERACTIVE TOOL TESTER
+============================================================
+1️⃣  Create Usage Log           6️⃣  Get Unique Users
+2️⃣  Get Usage Logs (All)       7️⃣  Get Unique Applications
+3️⃣  Get Usage Logs (Filtered)  8️⃣  Get Unique Platforms
+4️⃣  Update Usage Log           9️⃣  Get Usage Statistics
+5️⃣  Delete Usage Log           🔟  Test Duration Aggregation
+📊  Show All Data Summary       🧪  Run All Tests (Auto)
+❌  Exit
+============================================================
+```
+
+**Features:**
+- **Smart Defaults**: Quick testing with sensible default values
+- **Input Validation**: Type checking and format validation
+- **Duration Aggregation**: Test automatic duration aggregation for duplicates
+- **Comprehensive Testing**: Automated test suite for all functionality
+- **User-Friendly**: Clear prompts and formatted output
+
+### 📋 Manual Testing
+
+The interactive client includes comprehensive automated testing options (menu option 🧪).
+
+### 📚 Documentation
+
+- **Interactive Interface**: The `interactive_client.py` includes built-in help and guidance
+- **Architecture Details**: Continue reading this README for technical details
+
+---
+
+## 3. Folder Structure
 
 ```
 application_usage_mcp/
@@ -47,7 +96,7 @@ application_usage_mcp/
 │
 └── examples/                          # Usage examples and utilities
     ├── start_server.py                # Server startup script
-    └── client_usage.py                # Client usage examples
+    └── interactive_client.py          # Interactive CLI for testing all tools
 ```
 
 ### Folder Purposes:
@@ -60,7 +109,7 @@ application_usage_mcp/
 
 ---
 
-## 3. Documentation
+## 4. Documentation
 
 ### Core Files Documentation
 
@@ -108,7 +157,7 @@ The database uses the following schema for tracking application usage across dif
 | `user` | TEXT | NOT NULL | Username or device ID |
 | `application_name` | TEXT | NOT NULL | Name of the application (e.g., chrome.exe) |
 | `application_version` | TEXT | NOT NULL | Application version number |
-| `log_date` | TEXT | NOT NULL | ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ) |
+| `log_date` | TEXT | NOT NULL | Date in YYYY-MM-DD format |
 | `legacy_app` | BOOLEAN | NOT NULL | Indicates if the application is legacy (true/false) |
 | `duration_seconds` | INTEGER | NOT NULL | Usage time in seconds |
 
@@ -131,7 +180,7 @@ The database uses the following schema for tracking application usage across dif
   "user": "john_doe",
   "application_name": "chrome.exe",
   "application_version": "119.0.6045.105",
-  "log_date": "2025-07-27T10:30:00Z",
+  "log_date": "2025-07-27",
   "legacy_app": false,
   "duration_seconds": 3600
 }
@@ -194,7 +243,7 @@ ORDER BY total_seconds DESC;
 
 ---
 
-## 4. Architecture
+## 5. Architecture
 
 ### System Architecture Overview
 
@@ -615,6 +664,62 @@ pip install jsonschema==4.17.0 pytest==7.0.0 pytest-asyncio==0.21.0
    │   ├── mimeType: "application/json"
    │   └── text: JSON-formatted statistics
    └── Client receives statistics data
+```
+
+### 7.7 New Features (Duration Aggregation & Unique Values)
+
+#### 7.7.1 Duration Aggregation Flow
+```
+1. Create Usage Log with Duplicate Detection
+   ├── Client sends 'tools/call' request with log data
+   ├── DatabaseManager.create_usage_log() called
+   │   ├── Check for existing record with same date, user, application_name
+   │   ├── If duplicate found:
+   │   │   ├── Retrieve existing duration_seconds
+   │   │   ├── Add new duration to existing duration
+   │   │   ├── Update record with new total duration
+   │   │   ├── Update other fields (monitor_app_version, platform, etc.)
+   │   │   └── Return existing record ID
+   │   └── If no duplicate:
+   │       ├── Insert new record as normal
+   │       └── Return new record ID
+   └── Client receives log ID (same ID if aggregated)
+```
+
+#### 7.7.2 Unique Values Retrieval Flow
+```
+1. Get Unique Users
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: "get_unique_users"
+   ├── DatabaseManager.get_unique_users() called
+   │   ├── Execute: SELECT DISTINCT user FROM usage_data ORDER BY user
+   │   └── Return sorted list of unique users
+   └── Client receives: ["alice", "bob", "john_doe"]
+
+2. Get Unique Applications  
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: "get_unique_applications"
+   ├── DatabaseManager.get_unique_applications() called
+   │   ├── Execute: SELECT DISTINCT application_name FROM usage_data ORDER BY application_name
+   │   └── Return sorted list of unique applications
+   └── Client receives: ["chrome.exe", "firefox.exe", "vscode.exe"]
+
+3. Get Unique Platforms
+   ├── Client sends 'tools/call' request
+   │   └── Tool name: "get_unique_platforms" 
+   ├── DatabaseManager.get_unique_platforms() called
+   │   ├── Execute: SELECT DISTINCT platform FROM usage_data ORDER BY platform
+   │   └── Return sorted list of unique platforms
+   └── Client receives: ["Linux", "Windows", "macOS"]
+```
+
+#### 7.7.3 Updated Data Format
+```
+- log_date format changed from ISO 8601 timestamp to YYYY-MM-DD
+- Composite indexes added for better DISTINCT query performance:
+  ├── idx_user_date (user, log_date)
+  ├── idx_app_platform (application_name, platform)  
+  └── idx_platform_date (platform, log_date)
 ```
 
 ### 7.8 Error Handling Flow

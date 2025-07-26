@@ -414,3 +414,93 @@ class DatabaseManager:
         except sqlite3.Error as e:
             self.logger.error(f"Error deleting usage log {log_id}: {e}")
             return False
+
+    def get_unique_users(self):
+        """
+        Get list of unique users from the database.
+        
+        This method retrieves all distinct user values from the usage_data table,
+        sorted alphabetically for consistent ordering.
+        
+        Returns:
+            list[str]: List of unique user names/identifiers.
+                      Returns empty list if no users found or on error.
+        
+        Example:
+            users = db.get_unique_users()
+            # Result: ['alice', 'bob', 'charlie']
+        """
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT DISTINCT user FROM usage_data ORDER BY user")
+                users = [row[0] for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved {len(users)} unique users.")
+                return users
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting unique users: {e}")
+            return []
+
+    def get_unique_applications(self):
+        """
+        Get list of unique applications from the database.
+        
+        This method retrieves all distinct application names from the usage_data table,
+        sorted alphabetically for consistent ordering.
+        
+        Returns:
+            list[str]: List of unique application names.
+                      Returns empty list if no applications found or on error.
+        
+        Example:
+            apps = db.get_unique_applications()
+            # Result: ['chrome.exe', 'firefox.exe', 'notepad.exe']
+        """
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT DISTINCT application_name FROM usage_data ORDER BY application_name")
+                applications = [row[0] for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved {len(applications)} unique applications.")
+                return applications
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting unique applications: {e}")
+            return []
+
+    def get_unique_platforms(self):
+        """
+        Get list of unique platforms from the database.
+        
+        This method retrieves all distinct platform values from the usage_data table,
+        sorted alphabetically for consistent ordering.
+        
+        Returns:
+            list[str]: List of unique platform names.
+                      Returns empty list if no platforms found or on error.
+        
+        Example:
+            platforms = db.get_unique_platforms()
+            # Result: ['Android', 'Linux', 'Windows', 'macOS']
+        """
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT DISTINCT platform FROM usage_data ORDER BY platform")
+                platforms = [row[0] for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved {len(platforms)} unique platforms.")
+                return platforms
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting unique platforms: {e}")
+            return []

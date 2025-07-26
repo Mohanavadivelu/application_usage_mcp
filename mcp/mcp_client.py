@@ -240,6 +240,30 @@ class MCPClient:
             return json.loads(stats_text)
         return None
 
+    async def get_unique_users(self) -> Optional[List[str]]:
+        """Get list of unique users from the database"""
+        result = await self.call_tool("get_unique_users", {})
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_unique_applications(self) -> Optional[List[str]]:
+        """Get list of unique applications from the database"""
+        result = await self.call_tool("get_unique_applications", {})
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_unique_platforms(self) -> Optional[List[str]]:
+        """Get list of unique platforms from the database"""
+        result = await self.call_tool("get_unique_platforms", {})
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
 
 # Example usage
 async def main():
@@ -262,10 +286,14 @@ async def main():
 
         # Test creating a usage log
         log_data = {
-            "module_name": "test_module",
-            "command": "test_command",
-            "timestamp": "2025-07-26T10:00:00Z",
-            "user_id": "test_user"
+            "monitor_app_version": "1.0.0",
+            "platform": "Windows",
+            "user": "test_user",
+            "application_name": "chrome.exe",
+            "application_version": "120.0.0",
+            "log_date": "2025-07-27",
+            "legacy_app": False,
+            "duration_seconds": 3600
         }
         
         log_id = await client.create_usage_log(log_data)
@@ -275,6 +303,19 @@ async def main():
             # Get logs
             logs = await client.get_usage_logs()
             logger.info(f"Retrieved {len(logs) if logs else 0} logs")
+
+            # Test the new unique value methods
+            users = await client.get_unique_users()
+            if users:
+                logger.info(f"Unique users: {users}")
+
+            applications = await client.get_unique_applications()
+            if applications:
+                logger.info(f"Unique applications: {applications}")
+
+            platforms = await client.get_unique_platforms()
+            if platforms:
+                logger.info(f"Unique platforms: {platforms}")
 
             # Get usage statistics
             stats = await client.get_usage_stats()

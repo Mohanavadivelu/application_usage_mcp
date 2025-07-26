@@ -19,5 +19,10 @@ CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_data(user);
 CREATE INDEX IF NOT EXISTS idx_usage_date ON usage_data(log_date);
 CREATE INDEX IF NOT EXISTS idx_usage_platform ON usage_data(platform);
 
+-- Add composite indexes for better DISTINCT performance
+CREATE INDEX IF NOT EXISTS idx_user_date ON usage_data(user, log_date);
+CREATE INDEX IF NOT EXISTS idx_app_platform ON usage_data(application_name, platform);
+CREATE INDEX IF NOT EXISTS idx_platform_date ON usage_data(platform, log_date);
+
 -- Migration: If old table exists, migrate data
 -- This will be handled by the database manager during initialization

@@ -62,7 +62,7 @@ class MCPServer:
                         "user": {"type": "string", "description": "Username or device ID"},
                         "application_name": {"type": "string", "description": "Name of the application (e.g., chrome.exe)"},
                         "application_version": {"type": "string", "description": "Application version number"},
-                        "log_date": {"type": "string", "description": "ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)"},
+                        "log_date": {"type": "string", "description": "Date in YYYY-MM-DD format"},
                         "legacy_app": {"type": "boolean", "description": "Indicates if the application is legacy"},
                         "duration_seconds": {"type": "integer", "description": "Usage time in seconds"}
                     },
@@ -111,6 +111,30 @@ class MCPServer:
                         "log_id": {"type": "integer"}
                     },
                     "required": ["log_id"]
+                }
+            },
+            "get_unique_users": {
+                "name": "get_unique_users",
+                "description": "Get list of unique users from the database",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            "get_unique_applications": {
+                "name": "get_unique_applications", 
+                "description": "Get list of unique applications from the database",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            "get_unique_platforms": {
+                "name": "get_unique_platforms",
+                "description": "Get list of unique platforms from the database", 
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
                 }
             }
         }
@@ -268,6 +292,12 @@ class MCPServer:
             elif tool_name == "delete_usage_log":
                 log_id = arguments["log_id"]
                 result = self.db_manager.delete_usage_log(log_id)
+            elif tool_name == "get_unique_users":
+                result = self.db_manager.get_unique_users()
+            elif tool_name == "get_unique_applications":
+                result = self.db_manager.get_unique_applications()
+            elif tool_name == "get_unique_platforms":
+                result = self.db_manager.get_unique_platforms()
             else:
                 return self.create_error_response(
                     message_id, ErrorCode.INTERNAL_ERROR, f"Tool implementation missing: {tool_name}"
