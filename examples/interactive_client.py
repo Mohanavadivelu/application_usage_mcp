@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional
 # Add project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from mcp.mcp_client import MCPClient
+from mcp_client import MCPClient
 
 # Configure logging (less verbose for interactive use)
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
