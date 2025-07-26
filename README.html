@@ -459,6 +459,665 @@ python interactive_client.py
 <li><strong><code>examples/</code></strong>: Practical usage examples and helper scripts</li>
 </ul>
 <hr>
+<h2 id="4-available-mcp-tools--analytics">4. Available MCP Tools &amp; Analytics</h2>
+<p>The system provides comprehensive tools for database operations and advanced analytics through the MCP protocol. All tools are accessible via the interactive client or programmatically through the MCP client.</p>
+<h3 id="%F0%9F%93%9D-basic-database-operations">📝 Basic Database Operations</h3>
+<h4 id="1-createusagelog---create-new-usage-log-entry">1. <strong>create_usage_log</strong> - Create New Usage Log Entry</h4>
+<p><strong>Purpose</strong>: Creates a new application usage log entry in the database.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"monitor_app_version"</span>: <span class="hljs-string">"1.0.0"</span>,    <span class="hljs-comment">// REQUIRED: Version of monitoring tool</span>
+  <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Windows"</span>,             <span class="hljs-comment">// REQUIRED: Operating system</span>
+  <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,                 <span class="hljs-comment">// REQUIRED: Username or device identifier</span>
+  <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,   <span class="hljs-comment">// REQUIRED: Name of the application</span>
+  <span class="hljs-attr">"application_version"</span>: <span class="hljs-string">"120.0.0"</span>,   <span class="hljs-comment">// REQUIRED: Version of the application</span>
+  <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-15"</span>,          <span class="hljs-comment">// REQUIRED: Date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"legacy_app"</span>: <span class="hljs-literal">false</span>,               <span class="hljs-comment">// REQUIRED: Whether app is legacy (true/false)</span>
+  <span class="hljs-attr">"duration_seconds"</span>: <span class="hljs-number">3600</span>           <span class="hljs-comment">// REQUIRED: Usage duration in seconds</span>
+}
+</div></code></pre>
+<p><strong>Note</strong>: All parameters are required for creating a usage log entry.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: {
+    <span class="hljs-attr">"content"</span>: [
+      {
+        <span class="hljs-attr">"type"</span>: <span class="hljs-string">"text"</span>,
+        <span class="hljs-attr">"text"</span>: <span class="hljs-string">"{\"result\": 123, \"tool\": \"create_usage_log\"}"</span>
+      }
+    ]
+  }
+}
+</div></code></pre>
+<h4 id="2-getusagelogs---retrieve-usage-logs">2. <strong>get_usage_logs</strong> - Retrieve Usage Logs</h4>
+<p><strong>Purpose</strong>: Retrieves usage logs with optional filtering.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"filters"</span>: {                    <span class="hljs-comment">// OPTIONAL: Object for filtering results</span>
+    <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,  <span class="hljs-comment">// OPTIONAL: Filter by application name</span>
+    <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Windows"</span>,            <span class="hljs-comment">// OPTIONAL: Filter by platform</span>
+    <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>                 <span class="hljs-comment">// OPTIONAL: Filter by user</span>
+  }
+}
+</div></code></pre>
+<p><strong>Note</strong>: All parameters are optional. If no filters are provided, returns all usage logs.
+&quot;user&quot;: &quot;john_doe&quot;
+}
+}</p>
+<pre class="hljs"><code><div>
+**Response Examples** (5 sample records):
+```json
+{
+  &quot;result&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;monitor_app_version&quot;: &quot;1.0.0&quot;,
+      &quot;platform&quot;: &quot;Windows&quot;,
+      &quot;user&quot;: &quot;john_doe&quot;,
+      &quot;application_name&quot;: &quot;chrome.exe&quot;,
+      &quot;application_version&quot;: &quot;120.0.0&quot;,
+      &quot;log_date&quot;: &quot;2025-01-15&quot;,
+      &quot;legacy_app&quot;: false,
+      &quot;duration_seconds&quot;: 3600
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;monitor_app_version&quot;: &quot;1.0.0&quot;,
+      &quot;platform&quot;: &quot;macOS&quot;,
+      &quot;user&quot;: &quot;alice_smith&quot;,
+      &quot;application_name&quot;: &quot;safari.app&quot;,
+      &quot;application_version&quot;: &quot;17.2&quot;,
+      &quot;log_date&quot;: &quot;2025-01-15&quot;,
+      &quot;legacy_app&quot;: false,
+      &quot;duration_seconds&quot;: 2400
+    },
+    {
+      &quot;id&quot;: 3,
+      &quot;monitor_app_version&quot;: &quot;1.0.0&quot;,
+      &quot;platform&quot;: &quot;Windows&quot;,
+      &quot;user&quot;: &quot;bob_wilson&quot;,
+      &quot;application_name&quot;: &quot;firefox.exe&quot;,
+      &quot;application_version&quot;: &quot;121.0&quot;,
+      &quot;log_date&quot;: &quot;2025-01-14&quot;,
+      &quot;legacy_app&quot;: false,
+      &quot;duration_seconds&quot;: 1800
+    },
+    {
+      &quot;id&quot;: 4,
+      &quot;monitor_app_version&quot;: &quot;1.0.0&quot;,
+      &quot;platform&quot;: &quot;Linux&quot;,
+      &quot;user&quot;: &quot;charlie_brown&quot;,
+      &quot;application_name&quot;: &quot;code&quot;,
+      &quot;application_version&quot;: &quot;1.85.0&quot;,
+      &quot;log_date&quot;: &quot;2025-01-14&quot;,
+      &quot;legacy_app&quot;: false,
+      &quot;duration_seconds&quot;: 7200
+    },
+    {
+      &quot;id&quot;: 5,
+      &quot;monitor_app_version&quot;: &quot;1.0.0&quot;,
+      &quot;platform&quot;: &quot;Windows&quot;,
+      &quot;user&quot;: &quot;diana_prince&quot;,
+      &quot;application_name&quot;: &quot;notepad.exe&quot;,
+      &quot;application_version&quot;: &quot;10.0&quot;,
+      &quot;log_date&quot;: &quot;2025-01-13&quot;,
+      &quot;legacy_app&quot;: true,
+      &quot;duration_seconds&quot;: 600
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="3-updateusagelog---update-existing-log">3. <strong>update_usage_log</strong> - Update Existing Log</h4>
+<p><strong>Purpose</strong>: Updates specific fields of an existing usage log.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"log_id"</span>: <span class="hljs-number">123</span>,                     <span class="hljs-comment">// REQUIRED: ID of the log entry to update</span>
+  <span class="hljs-attr">"updates"</span>: {                       <span class="hljs-comment">// REQUIRED: Object containing fields to update</span>
+    <span class="hljs-attr">"duration_seconds"</span>: <span class="hljs-number">7200</span>,        <span class="hljs-comment">// OPTIONAL: New duration value</span>
+    <span class="hljs-attr">"application_version"</span>: <span class="hljs-string">"120.0.1"</span> <span class="hljs-comment">// OPTIONAL: New application version</span>
+  }
+}
+</div></code></pre>
+<p><strong>Note</strong>: <code>log_id</code> and <code>updates</code> object are required. Within <code>updates</code>, specify only the fields you want to change.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: {
+    <span class="hljs-attr">"content"</span>: [
+      {
+        <span class="hljs-attr">"type"</span>: <span class="hljs-string">"text"</span>,
+        <span class="hljs-attr">"text"</span>: <span class="hljs-string">"{\"result\": true, \"tool\": \"update_usage_log\"}"</span>
+      }
+    ]
+  }
+}
+</div></code></pre>
+<h4 id="4-deleteusagelog---delete-usage-log">4. <strong>delete_usage_log</strong> - Delete Usage Log</h4>
+<p><strong>Purpose</strong>: Permanently removes a usage log entry.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"log_id"</span>: <span class="hljs-number">123</span>                      <span class="hljs-comment">// REQUIRED: ID of the log entry to delete</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: {
+    <span class="hljs-attr">"content"</span>: [
+      {
+        <span class="hljs-attr">"type"</span>: <span class="hljs-string">"text"</span>, 
+        <span class="hljs-attr">"text"</span>: <span class="hljs-string">"{\"result\": true, \"tool\": \"delete_usage_log\"}"</span>
+      }
+    ]
+  }
+}
+</div></code></pre>
+<h3 id="%F0%9F%93%8A-advanced-analytics-tools">📊 Advanced Analytics Tools</h3>
+<h4 id="5-analyzetopusers---top-users-by-application">5. <strong>analyze_top_users</strong> - Top Users by Application</h4>
+<p><strong>Purpose</strong>: Get top N users by total usage time for a specific application.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"app_name"</span>: <span class="hljs-string">"chrome.exe"</span>,      <span class="hljs-comment">// REQUIRED: Name of the application to analyze</span>
+  <span class="hljs-attr">"limit"</span>: <span class="hljs-number">5</span>                     <span class="hljs-comment">// OPTIONAL: Number of users to return (default: 10)</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">45</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">163800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">45.5</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"alice_smith"</span>, 
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">38</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">133200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">37.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"bob_wilson"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">32</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">115200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">32.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"charlie_brown"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">28</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">100800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">28.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"diana_prince"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">25</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">90000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">25.0</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="6-analyzenewusers---new-user-analysis">6. <strong>analyze_new_users</strong> - New User Analysis</h4>
+<p><strong>Purpose</strong>: Find users who started using the system within a date range.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"start_date"</span>: <span class="hljs-string">"2025-01-01"</span>,    <span class="hljs-comment">// REQUIRED: Start date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"end_date"</span>: <span class="hljs-string">"2025-01-31"</span>,      <span class="hljs-comment">// REQUIRED: End date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"app_name"</span>: <span class="hljs-string">"chrome.exe"</span>       <span class="hljs-comment">// OPTIONAL: Specific application to analyze</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"new_user_1"</span>,
+      <span class="hljs-attr">"first_entry_date"</span>: <span class="hljs-string">"2025-01-15"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">12</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">30600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">8.5</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"new_user_2"</span>,
+      <span class="hljs-attr">"first_entry_date"</span>: <span class="hljs-string">"2025-01-18"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">18</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">44280</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">12.3</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"new_user_3"</span>,
+      <span class="hljs-attr">"first_entry_date"</span>: <span class="hljs-string">"2025-01-22"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">8</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">21600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">6.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"new_user_4"</span>,
+      <span class="hljs-attr">"first_entry_date"</span>: <span class="hljs-string">"2025-01-25"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">15</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">54000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">15.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"new_user_5"</span>,
+      <span class="hljs-attr">"first_entry_date"</span>: <span class="hljs-string">"2025-01-28"</span>,
+      <span class="hljs-attr">"session_count"</span>: <span class="hljs-number">5</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">18000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">5.0</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="7-analyzeinactiveusers---inactive-user-analysis">7. <strong>analyze_inactive_users</strong> - Inactive User Analysis</h4>
+<p><strong>Purpose</strong>: Find users who haven't been active since a specific date.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"cutoff_date"</span>: <span class="hljs-string">"2025-01-01"</span>,   <span class="hljs-comment">// REQUIRED: Date in YYYY-MM-DD format (users inactive since this date)</span>
+  <span class="hljs-attr">"app_name"</span>: <span class="hljs-string">"chrome.exe"</span>       <span class="hljs-comment">// OPTIONAL: Specific application to analyze</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"inactive_user_1"</span>,
+      <span class="hljs-attr">"last_activity_date"</span>: <span class="hljs-string">"2024-12-28"</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">156</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">561600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">156.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"inactive_user_2"</span>,
+      <span class="hljs-attr">"last_activity_date"</span>: <span class="hljs-string">"2024-12-25"</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">89</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">320400</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">89.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"inactive_user_3"</span>,
+      <span class="hljs-attr">"last_activity_date"</span>: <span class="hljs-string">"2024-12-20"</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">67</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">241200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">67.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"inactive_user_4"</span>,
+      <span class="hljs-attr">"last_activity_date"</span>: <span class="hljs-string">"2024-12-15"</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">45</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">162000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">45.0</span>
+    },
+    {
+      <span class="hljs-attr">"user"</span>: <span class="hljs-string">"inactive_user_5"</span>,
+      <span class="hljs-attr">"last_activity_date"</span>: <span class="hljs-string">"2024-12-10"</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">23</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">82800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">23.0</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="8-analyzeweeklyadditions---weekly-user-additions">8. <strong>analyze_weekly_additions</strong> - Weekly User Additions</h4>
+<p><strong>Purpose</strong>: Get weekly breakdown of new user registrations.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"start_date"</span>: <span class="hljs-string">"2025-01-01"</span>,    <span class="hljs-comment">// REQUIRED: Start date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"end_date"</span>: <span class="hljs-string">"2025-01-31"</span>       <span class="hljs-comment">// REQUIRED: End date in YYYY-MM-DD format</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"week"</span>: <span class="hljs-string">"2025-W01"</span>,
+      <span class="hljs-attr">"week_start"</span>: <span class="hljs-string">"2025-01-01"</span>,
+      <span class="hljs-attr">"new_users"</span>: <span class="hljs-number">12</span>
+    },
+    {
+      <span class="hljs-attr">"week"</span>: <span class="hljs-string">"2025-W02"</span>, 
+      <span class="hljs-attr">"week_start"</span>: <span class="hljs-string">"2025-01-06"</span>,
+      <span class="hljs-attr">"new_users"</span>: <span class="hljs-number">18</span>
+    },
+    {
+      <span class="hljs-attr">"week"</span>: <span class="hljs-string">"2025-W03"</span>,
+      <span class="hljs-attr">"week_start"</span>: <span class="hljs-string">"2025-01-13"</span>,
+      <span class="hljs-attr">"new_users"</span>: <span class="hljs-number">15</span>
+    },
+    {
+      <span class="hljs-attr">"week"</span>: <span class="hljs-string">"2025-W04"</span>,
+      <span class="hljs-attr">"week_start"</span>: <span class="hljs-string">"2025-01-20"</span>,
+      <span class="hljs-attr">"new_users"</span>: <span class="hljs-number">22</span>
+    },
+    {
+      <span class="hljs-attr">"week"</span>: <span class="hljs-string">"2025-W05"</span>,
+      <span class="hljs-attr">"week_start"</span>: <span class="hljs-string">"2025-01-27"</span>,
+      <span class="hljs-attr">"new_users"</span>: <span class="hljs-number">8</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="9-analyzeapplicationstats---application-usage-statistics">9. <strong>analyze_application_stats</strong> - Application Usage Statistics</h4>
+<p><strong>Purpose</strong>: Get comprehensive usage statistics for applications.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"app_name"</span>: <span class="hljs-string">"chrome.exe"</span>       <span class="hljs-comment">// OPTIONAL: Specific application to analyze (omit for all apps)</span>
+}
+</div></code></pre>
+<p><strong>Note</strong>: If <code>app_name</code> is omitted, returns statistics for all applications.</p>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">245</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">1567</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">5641200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">1567.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+      <span class="hljs-attr">"first_usage"</span>: <span class="hljs-string">"2024-12-01"</span>,
+      <span class="hljs-attr">"last_usage"</span>: <span class="hljs-string">"2025-01-31"</span>
+    },
+    {
+      <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"firefox.exe"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">189</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">892</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">3211200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">892.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+      <span class="hljs-attr">"first_usage"</span>: <span class="hljs-string">"2024-12-01"</span>,
+      <span class="hljs-attr">"last_usage"</span>: <span class="hljs-string">"2025-01-30"</span>
+    },
+    {
+      <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"code.exe"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">156</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">2341</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">8427600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">2341.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+      <span class="hljs-attr">"first_usage"</span>: <span class="hljs-string">"2024-12-01"</span>,
+      <span class="hljs-attr">"last_usage"</span>: <span class="hljs-string">"2025-01-31"</span>
+    },
+    {
+      <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"notepad.exe"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">78</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">234</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">842400</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">234.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+      <span class="hljs-attr">"first_usage"</span>: <span class="hljs-string">"2024-12-01"</span>,
+      <span class="hljs-attr">"last_usage"</span>: <span class="hljs-string">"2025-01-29"</span>
+    },
+    {
+      <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"safari.app"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">123</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">567</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">2041200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">567.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+      <span class="hljs-attr">"first_usage"</span>: <span class="hljs-string">"2024-12-01"</span>,
+      <span class="hljs-attr">"last_usage"</span>: <span class="hljs-string">"2025-01-31"</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="10-analyzeplatformdistribution---platform-usage-distribution">10. <strong>analyze_platform_distribution</strong> - Platform Usage Distribution</h4>
+<p><strong>Purpose</strong>: Get usage distribution across different platforms.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{}
+</div></code></pre>
+<p><strong>Note</strong>: No parameters required. Returns distribution for all platforms.</p>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Windows"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">456</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">2876</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">10353600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">2876.0</span>,
+      <span class="hljs-attr">"session_percentage"</span>: <span class="hljs-number">65.4</span>,
+      <span class="hljs-attr">"time_percentage"</span>: <span class="hljs-number">68.2</span>
+    },
+    {
+      <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"macOS"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">234</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">1123</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">4042800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">1123.0</span>,
+      <span class="hljs-attr">"session_percentage"</span>: <span class="hljs-number">25.5</span>,
+      <span class="hljs-attr">"time_percentage"</span>: <span class="hljs-number">26.6</span>
+    },
+    {
+      <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Linux"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">123</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">345</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">1242000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">345.0</span>,
+      <span class="hljs-attr">"session_percentage"</span>: <span class="hljs-number">7.8</span>,
+      <span class="hljs-attr">"time_percentage"</span>: <span class="hljs-number">8.2</span>
+    },
+    {
+      <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Android"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">89</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">234</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">842400</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">234.0</span>,
+      <span class="hljs-attr">"session_percentage"</span>: <span class="hljs-number">5.3</span>,
+      <span class="hljs-attr">"time_percentage"</span>: <span class="hljs-number">5.5</span>
+    },
+    {
+      <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"iOS"</span>,
+      <span class="hljs-attr">"unique_users"</span>: <span class="hljs-number">67</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">156</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">561600</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">156.0</span>,
+      <span class="hljs-attr">"session_percentage"</span>: <span class="hljs-number">3.5</span>,
+      <span class="hljs-attr">"time_percentage"</span>: <span class="hljs-number">3.7</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="11-analyzedailytrends---daily-usage-trends">11. <strong>analyze_daily_trends</strong> - Daily Usage Trends</h4>
+<p><strong>Purpose</strong>: Get daily usage trends over a specified period.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"start_date"</span>: <span class="hljs-string">"2025-01-01"</span>,    <span class="hljs-comment">// REQUIRED: Start date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"end_date"</span>: <span class="hljs-string">"2025-01-07"</span>,      <span class="hljs-comment">// REQUIRED: End date in YYYY-MM-DD format</span>
+  <span class="hljs-attr">"app_name"</span>: <span class="hljs-string">"chrome.exe"</span>       <span class="hljs-comment">// OPTIONAL: Specific application to analyze</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong> (5 sample records):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [
+    {
+      <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-01"</span>,
+      <span class="hljs-attr">"active_users"</span>: <span class="hljs-number">234</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">567</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">2041200</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">567.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>
+    },
+    {
+      <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-02"</span>,
+      <span class="hljs-attr">"active_users"</span>: <span class="hljs-number">189</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">445</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">1602000</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">445.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>
+    },
+    {
+      <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-03"</span>,
+      <span class="hljs-attr">"active_users"</span>: <span class="hljs-number">267</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">623</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">2242800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">623.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>
+    },
+    {
+      <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-04"</span>,
+      <span class="hljs-attr">"active_users"</span>: <span class="hljs-number">298</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">734</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">2642400</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">734.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>
+    },
+    {
+      <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-01-05"</span>,
+      <span class="hljs-attr">"active_users"</span>: <span class="hljs-number">156</span>,
+      <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">378</span>,
+      <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">1360800</span>,
+      <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">378.0</span>,
+      <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>
+    }
+  ]
+}
+</div></code></pre>
+<h4 id="12-analyzeuseractivity---individual-user-activity-summary">12. <strong>analyze_user_activity</strong> - Individual User Activity Summary</h4>
+<p><strong>Purpose</strong>: Get comprehensive activity summary for a specific user.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"user_name"</span>: <span class="hljs-string">"john_doe"</span>        <span class="hljs-comment">// REQUIRED: Username to analyze</span>
+}
+</div></code></pre>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: {
+    <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,
+    <span class="hljs-attr">"total_sessions"</span>: <span class="hljs-number">156</span>,
+    <span class="hljs-attr">"apps_used"</span>: <span class="hljs-number">8</span>,
+    <span class="hljs-attr">"platforms_used"</span>: <span class="hljs-number">2</span>,
+    <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">561600</span>,
+    <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">156.0</span>,
+    <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+    <span class="hljs-attr">"first_activity"</span>: <span class="hljs-string">"2024-12-01"</span>,
+    <span class="hljs-attr">"last_activity"</span>: <span class="hljs-string">"2025-01-31"</span>,
+    <span class="hljs-attr">"application_breakdown"</span>: [
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">89</span>,
+        <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">320400</span>,
+        <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">89.0</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"code.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">34</span>,
+        <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">122400</span>,
+        <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">34.0</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"firefox.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">23</span>,
+        <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">82800</span>,
+        <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">23.0</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"notepad.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">10</span>,
+        <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">36000</span>,
+        <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">10.0</span>
+      }
+    ]
+  }
+}
+</div></code></pre>
+<h4 id="13-analyzesystemoverview---system-wide-statistics">13. <strong>analyze_system_overview</strong> - System-Wide Statistics</h4>
+<p><strong>Purpose</strong>: Get high-level system statistics and overview.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{}
+</div></code></pre>
+<p><strong>Note</strong>: No parameters required. Returns system-wide statistics.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: {
+    <span class="hljs-attr">"total_records"</span>: <span class="hljs-number">12456</span>,
+    <span class="hljs-attr">"total_users"</span>: <span class="hljs-number">1234</span>,
+    <span class="hljs-attr">"total_applications"</span>: <span class="hljs-number">45</span>,
+    <span class="hljs-attr">"total_platforms"</span>: <span class="hljs-number">5</span>,
+    <span class="hljs-attr">"total_seconds"</span>: <span class="hljs-number">44841600</span>,
+    <span class="hljs-attr">"total_hours"</span>: <span class="hljs-number">12456.0</span>,
+    <span class="hljs-attr">"avg_session_minutes"</span>: <span class="hljs-number">60.0</span>,
+    <span class="hljs-attr">"earliest_record"</span>: <span class="hljs-string">"2024-12-01"</span>,
+    <span class="hljs-attr">"latest_record"</span>: <span class="hljs-string">"2025-01-31"</span>,
+    <span class="hljs-attr">"top_applications"</span>: [
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">3456</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"code.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">2890</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"firefox.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">1567</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"safari.app"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">1234</span>
+      },
+      {
+        <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"notepad.exe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">890</span>
+      }
+    ],
+    <span class="hljs-attr">"top_users"</span>: [
+      {
+        <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">234</span>
+      },
+      {
+        <span class="hljs-attr">"user"</span>: <span class="hljs-string">"alice_smith"</span>, 
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">198</span>
+      },
+      {
+        <span class="hljs-attr">"user"</span>: <span class="hljs-string">"bob_wilson"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">167</span>
+      },
+      {
+        <span class="hljs-attr">"user"</span>: <span class="hljs-string">"charlie_brown"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">145</span>
+      },
+      {
+        <span class="hljs-attr">"user"</span>: <span class="hljs-string">"diana_prince"</span>,
+        <span class="hljs-attr">"sessions"</span>: <span class="hljs-number">134</span>
+      }
+    ]
+  }
+}
+</div></code></pre>
+<h3 id="%F0%9F%94%8D-utility-tools">🔍 Utility Tools</h3>
+<h4 id="14-getuniqueusers---list-all-users">14. <strong>get_unique_users</strong> - List All Users</h4>
+<p><strong>Purpose</strong>: Get list of unique users from the database.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{}
+</div></code></pre>
+<p><strong>Note</strong>: No parameters required. Returns all unique users.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [<span class="hljs-string">"alice_smith"</span>, <span class="hljs-string">"bob_wilson"</span>, <span class="hljs-string">"charlie_brown"</span>, <span class="hljs-string">"diana_prince"</span>, <span class="hljs-string">"john_doe"</span>]
+}
+</div></code></pre>
+<h4 id="15-getuniqueapplications---list-all-applications">15. <strong>get_unique_applications</strong> - List All Applications</h4>
+<p><strong>Purpose</strong>: Get list of unique applications from the database.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{}
+</div></code></pre>
+<p><strong>Note</strong>: No parameters required. Returns all unique applications.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [<span class="hljs-string">"chrome.exe"</span>, <span class="hljs-string">"code.exe"</span>, <span class="hljs-string">"firefox.exe"</span>, <span class="hljs-string">"notepad.exe"</span>, <span class="hljs-string">"safari.app"</span>]
+}
+</div></code></pre>
+<h4 id="16-getuniqueplatforms---list-all-platforms">16. <strong>get_unique_platforms</strong> - List All Platforms</h4>
+<p><strong>Purpose</strong>: Get list of unique platforms from the database.</p>
+<p><strong>Request Parameters</strong>:</p>
+<pre class="hljs"><code><div>{}
+</div></code></pre>
+<p><strong>Note</strong>: No parameters required. Returns all unique platforms.</p>
+<p><strong>Response Examples</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"result"</span>: [<span class="hljs-string">"Android"</span>, <span class="hljs-string">"Linux"</span>, <span class="hljs-string">"Windows"</span>, <span class="hljs-string">"iOS"</span>, <span class="hljs-string">"macOS"</span>]
+}
+</div></code></pre>
+<hr>
+<h2 id="5-component-details">5. Component Details</h2>
 <h2 id="4-documentation">4. Documentation</h2>
 <h3 id="core-files-documentation">Core Files Documentation</h3>
 <h4 id="mainpy"><code>main.py</code></h4>

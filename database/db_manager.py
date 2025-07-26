@@ -504,3 +504,466 @@ class DatabaseManager:
         except sqlite3.Error as e:
             self.logger.error(f"Error getting unique platforms: {e}")
             return []
+
+    # =============================================================================
+    # ANALYTICS AND STATISTICS METHODS
+    # =============================================================================
+
+    def get_top_users_by_app(self, app_name: str, limit: int = 10):
+        """
+        Get top N users by total usage time for a specific application.
+        
+        Args:
+            app_name (str): Name of the application to analyze
+            limit (int): Number of top users to return (default: 10)
+            
+        Returns:
+            list[dict]: List of users with their usage statistics
+                       Each dict contains: user, total_hours, total_seconds, session_count
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                sql = """
+                    SELECT 
+                        user,
+                        COUNT(*) as session_count,
+                        SUM(duration_seconds) as total_seconds,
+                        ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                    FROM usage_data 
+                    WHERE application_name = ?
+                    GROUP BY user 
+                    ORDER BY total_seconds DESC 
+                    LIMIT ?
+                """
+                cursor.execute(sql, (app_name, limit))
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved top {len(results)} users for {app_name}")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting top users for {app_name}: {e}")
+            return []
+
+    def get_new_users_in_period(self, start_date: str, end_date: str, app_name: str = None):
+        """
+        Find users who started using the system (or specific app) within a date range.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            list[dict]: New users with first_entry_date and total usage since joining
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                if app_name:
+                    sql = """
+                        SELECT 
+                            user,
+                            MIN(log_date) as first_entry_date,
+                            COUNT(*) as session_count,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                        FROM usage_data 
+                        WHERE application_name = ?
+                        GROUP BY user 
+                        HAVING MIN(log_date) BETWEEN ? AND ?
+                        ORDER BY first_entry_date DESC
+                    """
+                    cursor.execute(sql, (app_name, start_date, end_date))
+                else:
+                    sql = """
+                        SELECT 
+                            user,
+                            MIN(log_date) as first_entry_date,
+                            COUNT(*) as session_count,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                        FROM usage_data 
+                        GROUP BY user 
+                        HAVING MIN(log_date) BETWEEN ? AND ?
+                        ORDER BY first_entry_date DESC
+                    """
+                    cursor.execute(sql, (start_date, end_date))
+                
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Found {len(results)} new users between {start_date} and {end_date}")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting new users: {e}")
+            return []
+
+    def get_inactive_users_since(self, cutoff_date: str, app_name: str = None):
+        """
+        Find users who haven't been active since a specific date.
+        
+        Args:
+            cutoff_date (str): Date in YYYY-MM-DD format (users inactive since this date)
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            list[dict]: Inactive users with last_activity_date and total historical usage
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                if app_name:
+                    sql = """
+                        SELECT 
+                            user,
+                            MAX(log_date) as last_activity_date,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                        FROM usage_data 
+                        WHERE application_name = ?
+                        GROUP BY user 
+                        HAVING MAX(log_date) < ?
+                        ORDER BY last_activity_date DESC
+                    """
+                    cursor.execute(sql, (app_name, cutoff_date))
+                else:
+                    sql = """
+                        SELECT 
+                            user,
+                            MAX(log_date) as last_activity_date,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                        FROM usage_data 
+                        GROUP BY user 
+                        HAVING MAX(log_date) < ?
+                        ORDER BY last_activity_date DESC
+                    """
+                    cursor.execute(sql, (cutoff_date,))
+                
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Found {len(results)} inactive users since {cutoff_date}")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting inactive users: {e}")
+            return []
+
+    def get_user_additions_by_week(self, start_date: str, end_date: str):
+        """
+        Get weekly breakdown of new user registrations.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            
+        Returns:
+            list[dict]: Weekly breakdown with week number and new user count
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                sql = """
+                    WITH user_first_dates AS (
+                        SELECT user, MIN(log_date) as first_date
+                        FROM usage_data 
+                        GROUP BY user
+                        HAVING MIN(log_date) BETWEEN ? AND ?
+                    )
+                    SELECT 
+                        strftime('%Y-W%W', first_date) as week,
+                        strftime('%Y-%m-%d', first_date) as week_start,
+                        COUNT(*) as new_users
+                    FROM user_first_dates
+                    GROUP BY strftime('%Y-W%W', first_date)
+                    ORDER BY week
+                """
+                cursor.execute(sql, (start_date, end_date))
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved weekly user additions for {len(results)} weeks")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting weekly user additions: {e}")
+            return []
+
+    def get_application_usage_stats(self, app_name: str = None):
+        """
+        Get comprehensive usage statistics for applications.
+        
+        Args:
+            app_name (str, optional): Specific application to analyze, or None for all apps
+            
+        Returns:
+            list[dict]: Application statistics including users, sessions, and time metrics
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                if app_name:
+                    sql = """
+                        SELECT 
+                            application_name,
+                            COUNT(DISTINCT user) as unique_users,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                            ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes,
+                            MIN(log_date) as first_usage,
+                            MAX(log_date) as last_usage
+                        FROM usage_data 
+                        WHERE application_name = ?
+                        GROUP BY application_name
+                    """
+                    cursor.execute(sql, (app_name,))
+                else:
+                    sql = """
+                        SELECT 
+                            application_name,
+                            COUNT(DISTINCT user) as unique_users,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                            ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes,
+                            MIN(log_date) as first_usage,
+                            MAX(log_date) as last_usage
+                        FROM usage_data 
+                        GROUP BY application_name
+                        ORDER BY total_seconds DESC
+                    """
+                    cursor.execute(sql)
+                
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved usage stats for {len(results)} applications")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting application usage stats: {e}")
+            return []
+
+    def get_platform_distribution(self):
+        """
+        Get usage distribution across different platforms.
+        
+        Returns:
+            list[dict]: Platform statistics with user counts and usage time
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                sql = """
+                    SELECT 
+                        platform,
+                        COUNT(DISTINCT user) as unique_users,
+                        COUNT(*) as total_sessions,
+                        SUM(duration_seconds) as total_seconds,
+                        ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                        ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM usage_data), 2) as session_percentage,
+                        ROUND(100.0 * SUM(duration_seconds) / (SELECT SUM(duration_seconds) FROM usage_data), 2) as time_percentage
+                    FROM usage_data 
+                    GROUP BY platform
+                    ORDER BY total_seconds DESC
+                """
+                cursor.execute(sql)
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved platform distribution for {len(results)} platforms")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting platform distribution: {e}")
+            return []
+
+    def get_daily_usage_trends(self, start_date: str, end_date: str, app_name: str = None):
+        """
+        Get daily usage trends over a specified period.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            list[dict]: Daily usage statistics
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                if app_name:
+                    sql = """
+                        SELECT 
+                            log_date,
+                            COUNT(DISTINCT user) as active_users,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                            ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes
+                        FROM usage_data 
+                        WHERE log_date BETWEEN ? AND ? AND application_name = ?
+                        GROUP BY log_date
+                        ORDER BY log_date
+                    """
+                    cursor.execute(sql, (start_date, end_date, app_name))
+                else:
+                    sql = """
+                        SELECT 
+                            log_date,
+                            COUNT(DISTINCT user) as active_users,
+                            COUNT(*) as total_sessions,
+                            SUM(duration_seconds) as total_seconds,
+                            ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                            ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes
+                        FROM usage_data 
+                        WHERE log_date BETWEEN ? AND ?
+                        GROUP BY log_date
+                        ORDER BY log_date
+                    """
+                    cursor.execute(sql, (start_date, end_date))
+                
+                results = [dict(row) for row in cursor.fetchall()]
+                self.logger.info(f"Retrieved daily trends for {len(results)} days")
+                return results
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting daily usage trends: {e}")
+            return []
+
+    def get_user_activity_summary(self, user_name: str):
+        """
+        Get comprehensive activity summary for a specific user.
+        
+        Args:
+            user_name (str): Username to analyze
+            
+        Returns:
+            dict: Comprehensive user statistics
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                # Overall user stats
+                sql = """
+                    SELECT 
+                        user,
+                        COUNT(*) as total_sessions,
+                        COUNT(DISTINCT application_name) as apps_used,
+                        COUNT(DISTINCT platform) as platforms_used,
+                        SUM(duration_seconds) as total_seconds,
+                        ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                        ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes,
+                        MIN(log_date) as first_activity,
+                        MAX(log_date) as last_activity
+                    FROM usage_data 
+                    WHERE user = ?
+                    GROUP BY user
+                """
+                cursor.execute(sql, (user_name,))
+                user_stats = cursor.fetchone()
+                
+                if not user_stats:
+                    return {}
+                
+                # App breakdown for user
+                sql = """
+                    SELECT 
+                        application_name,
+                        COUNT(*) as sessions,
+                        SUM(duration_seconds) as total_seconds,
+                        ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours
+                    FROM usage_data 
+                    WHERE user = ?
+                    GROUP BY application_name
+                    ORDER BY total_seconds DESC
+                """
+                cursor.execute(sql, (user_name,))
+                app_breakdown = [dict(row) for row in cursor.fetchall()]
+                
+                result = dict(user_stats)
+                result['application_breakdown'] = app_breakdown
+                
+                self.logger.info(f"Retrieved activity summary for user: {user_name}")
+                return result
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting user activity summary for {user_name}: {e}")
+            return {}
+
+    def get_system_overview(self):
+        """
+        Get high-level system statistics and overview.
+        
+        Returns:
+            dict: System-wide statistics
+        """
+        if self.conn is None:
+            self.connect()
+            
+        try:
+            with self.conn:
+                cursor = self.conn.cursor()
+                
+                # Overall system stats
+                sql = """
+                    SELECT 
+                        COUNT(*) as total_records,
+                        COUNT(DISTINCT user) as total_users,
+                        COUNT(DISTINCT application_name) as total_applications,
+                        COUNT(DISTINCT platform) as total_platforms,
+                        SUM(duration_seconds) as total_seconds,
+                        ROUND(SUM(duration_seconds) / 3600.0, 2) as total_hours,
+                        ROUND(AVG(duration_seconds) / 60.0, 2) as avg_session_minutes,
+                        MIN(log_date) as earliest_record,
+                        MAX(log_date) as latest_record
+                    FROM usage_data
+                """
+                cursor.execute(sql)
+                overview = dict(cursor.fetchone())
+                
+                # Add top applications
+                sql = """
+                    SELECT application_name, COUNT(*) as sessions
+                    FROM usage_data 
+                    GROUP BY application_name 
+                    ORDER BY sessions DESC 
+                    LIMIT 5
+                """
+                cursor.execute(sql)
+                overview['top_applications'] = [dict(row) for row in cursor.fetchall()]
+                
+                # Add top users
+                sql = """
+                    SELECT user, COUNT(*) as sessions
+                    FROM usage_data 
+                    GROUP BY user 
+                    ORDER BY sessions DESC 
+                    LIMIT 5
+                """
+                cursor.execute(sql)
+                overview['top_users'] = [dict(row) for row in cursor.fetchall()]
+                
+                self.logger.info("Retrieved system overview")
+                return overview
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting system overview: {e}")
+            return {}

@@ -50,6 +50,7 @@ class InteractiveMCPClient:
         print("\n" + "="*60)
         print("🛠️  MCP CLIENT INTERACTIVE TOOL TESTER")
         print("="*60)
+        print("📝 BASIC OPERATIONS")
         print("1️⃣  Create Usage Log")
         print("2️⃣  Get Usage Logs (All)")
         print("3️⃣  Get Usage Logs (Filtered)")
@@ -60,8 +61,21 @@ class InteractiveMCPClient:
         print("8️⃣  Get Unique Platforms")
         print("9️⃣  Get Usage Statistics")
         print("🔟  Test Duration Aggregation")
-        print("📊  Show All Data Summary")
-        print("🧪  Run All Tests (Auto)")
+        print()
+        print("📊 ANALYTICS & INSIGHTS")
+        print("1️⃣1️⃣  Top Users by Application")
+        print("1️⃣2️⃣  New Users Analysis")
+        print("1️⃣3️⃣  Inactive Users Analysis")
+        print("1️⃣4️⃣  Weekly User Additions")
+        print("1️⃣5️⃣  Application Usage Stats")
+        print("1️⃣6️⃣  Platform Distribution")
+        print("1️⃣7️⃣  Daily Usage Trends")
+        print("1️⃣8️⃣  User Activity Summary")
+        print("1️⃣9️⃣  System Overview")
+        print()
+        print("🔧 UTILITIES")
+        print("2️⃣0️⃣  Show All Data Summary")
+        print("2️⃣1️⃣  Run All Tests (Auto)")
         print("❌  Exit")
         print("="*60)
 
@@ -432,6 +446,183 @@ class InteractiveMCPClient:
         
         print("\n🎉 All automated tests completed!")
 
+    # =============================================================================
+    # ANALYTICS METHODS
+    # =============================================================================
+
+    async def analyze_top_users(self):
+        """Interactive top users analysis"""
+        print("\n📊 TOP USERS ANALYSIS")
+        print("-" * 40)
+        
+        app_name = self.get_user_input("Application Name", str, "chrome.exe")
+        limit = self.get_user_input("Number of users to show", int, 10)
+        
+        result = await self.client.get_top_users_analysis(app_name, limit)
+        if result:
+            print(f"\n🏆 Top {len(result)} users for {app_name}:")
+            for i, user in enumerate(result, 1):
+                print(f"  {i}. {user['user']}: {user['total_hours']} hours ({user['session_count']} sessions)")
+        else:
+            print("❌ No data found or analysis failed")
+
+    async def analyze_new_users(self):
+        """Interactive new users analysis"""
+        print("\n👥 NEW USERS ANALYSIS")
+        print("-" * 40)
+        
+        start_date = self.get_user_input("Start Date (YYYY-MM-DD)", str, "2025-01-01")
+        end_date = self.get_user_input("End Date (YYYY-MM-DD)", str, "2025-01-31")
+        app_name = self.get_user_input("Application Name (optional)", str, "")
+        
+        result = await self.client.get_new_users_analysis(start_date, end_date, app_name if app_name else None)
+        if result:
+            print(f"\n📈 Found {len(result)} new users from {start_date} to {end_date}:")
+            for user in result:
+                print(f"  • {user['user']}: Joined on {user['first_entry_date']}, {user['total_hours']} hours total")
+        else:
+            print("❌ No new users found or analysis failed")
+
+    async def analyze_inactive_users(self):
+        """Interactive inactive users analysis"""
+        print("\n😴 INACTIVE USERS ANALYSIS")
+        print("-" * 40)
+        
+        cutoff_date = self.get_user_input("Cutoff Date (YYYY-MM-DD)", str, "2025-01-01")
+        app_name = self.get_user_input("Application Name (optional)", str, "")
+        
+        result = await self.client.get_inactive_users_analysis(cutoff_date, app_name if app_name else None)
+        if result:
+            print(f"\n💤 Found {len(result)} inactive users since {cutoff_date}:")
+            for user in result:
+                print(f"  • {user['user']}: Last seen {user['last_activity_date']}, {user['total_hours']} hours total")
+        else:
+            print("❌ No inactive users found or analysis failed")
+
+    async def analyze_weekly_additions(self):
+        """Interactive weekly additions analysis"""
+        print("\n📅 WEEKLY USER ADDITIONS")
+        print("-" * 40)
+        
+        start_date = self.get_user_input("Start Date (YYYY-MM-DD)", str, "2025-01-01")
+        end_date = self.get_user_input("End Date (YYYY-MM-DD)", str, "2025-01-31")
+        
+        result = await self.client.get_weekly_additions_analysis(start_date, end_date)
+        if result:
+            print(f"\n📊 Weekly user additions from {start_date} to {end_date}:")
+            for week in result:
+                print(f"  • Week {week['week']}: {week['new_users']} new users")
+        else:
+            print("❌ No weekly data found or analysis failed")
+
+    async def analyze_application_stats(self):
+        """Interactive application statistics"""
+        print("\n💻 APPLICATION USAGE STATISTICS")
+        print("-" * 40)
+        
+        app_name = self.get_user_input("Application Name (leave empty for all)", str, "")
+        
+        result = await self.client.get_application_stats_analysis(app_name if app_name else None)
+        if result:
+            if app_name:
+                stats = result[0] if result else None
+                if stats:
+                    print(f"\n📱 Statistics for {stats['application_name']}:")
+                    print(f"  • Users: {stats['unique_users']}")
+                    print(f"  • Sessions: {stats['total_sessions']}")
+                    print(f"  • Total Hours: {stats['total_hours']}")
+                    print(f"  • Avg Session: {stats['avg_session_minutes']} minutes")
+                    print(f"  • First Usage: {stats['first_usage']}")
+                    print(f"  • Last Usage: {stats['last_usage']}")
+            else:
+                print(f"\n📊 Application statistics for {len(result)} apps:")
+                for stats in result[:10]:  # Show top 10
+                    print(f"  • {stats['application_name']}: {stats['unique_users']} users, {stats['total_hours']} hours")
+        else:
+            print("❌ No application statistics found or analysis failed")
+
+    async def analyze_platform_distribution(self):
+        """Interactive platform distribution analysis"""
+        print("\n🌐 PLATFORM DISTRIBUTION")
+        print("-" * 40)
+        
+        result = await self.client.get_platform_distribution_analysis()
+        if result:
+            print(f"\n📊 Platform usage distribution:")
+            for platform in result:
+                print(f"  • {platform['platform']}: {platform['unique_users']} users ({platform['time_percentage']}% of total time)")
+        else:
+            print("❌ No platform data found or analysis failed")
+
+    async def analyze_daily_trends(self):
+        """Interactive daily trends analysis"""
+        print("\n📈 DAILY USAGE TRENDS")
+        print("-" * 40)
+        
+        start_date = self.get_user_input("Start Date (YYYY-MM-DD)", str, "2025-01-01")
+        end_date = self.get_user_input("End Date (YYYY-MM-DD)", str, "2025-01-31")
+        app_name = self.get_user_input("Application Name (optional)", str, "")
+        
+        result = await self.client.get_daily_trends_analysis(start_date, end_date, app_name if app_name else None)
+        if result:
+            print(f"\n📊 Daily trends from {start_date} to {end_date}:")
+            for day in result[-7:]:  # Show last 7 days
+                print(f"  • {day['log_date']}: {day['active_users']} users, {day['total_hours']} hours")
+        else:
+            print("❌ No daily trend data found or analysis failed")
+
+    async def analyze_user_activity(self):
+        """Interactive user activity analysis"""
+        print("\n👤 USER ACTIVITY SUMMARY")
+        print("-" * 40)
+        
+        user_name = self.get_user_input("Username to analyze", str)
+        
+        result = await self.client.get_user_activity_analysis(user_name)
+        if result:
+            print(f"\n📊 Activity summary for {result['user']}:")
+            print(f"  • Total Sessions: {result['total_sessions']}")
+            print(f"  • Total Hours: {result['total_hours']}")
+            print(f"  • Apps Used: {result['apps_used']}")
+            print(f"  • Platforms Used: {result['platforms_used']}")
+            print(f"  • First Activity: {result['first_activity']}")
+            print(f"  • Last Activity: {result['last_activity']}")
+            
+            if 'application_breakdown' in result and result['application_breakdown']:
+                print(f"\n📱 Application breakdown:")
+                for app in result['application_breakdown'][:5]:  # Show top 5 apps
+                    print(f"  • {app['application_name']}: {app['total_hours']} hours ({app['sessions']} sessions)")
+        else:
+            print("❌ User not found or analysis failed")
+
+    async def analyze_system_overview(self):
+        """Interactive system overview"""
+        print("\n🖥️ SYSTEM OVERVIEW")
+        print("-" * 40)
+        
+        result = await self.client.get_system_overview_analysis()
+        if result:
+            print(f"\n📊 System Statistics:")
+            print(f"  • Total Records: {result['total_records']}")
+            print(f"  • Total Users: {result['total_users']}")
+            print(f"  • Total Applications: {result['total_applications']}")
+            print(f"  • Total Platforms: {result['total_platforms']}")
+            print(f"  • Total Hours: {result['total_hours']}")
+            print(f"  • Average Session: {result['avg_session_minutes']} minutes")
+            print(f"  • Data Range: {result['earliest_record']} to {result['latest_record']}")
+            
+            if 'top_applications' in result and result['top_applications']:
+                print(f"\n🏆 Top Applications:")
+                for app in result['top_applications']:
+                    print(f"  • {app['application_name']}: {app['sessions']} sessions")
+            
+            if 'top_users' in result and result['top_users']:
+                print(f"\n👑 Top Users:")
+                for user in result['top_users']:
+                    print(f"  • {user['user']}: {user['sessions']} sessions")
+        else:
+            print("❌ System overview failed")
+
     async def run(self):
         """Main interactive loop"""
         if not await self.connect():
@@ -462,9 +653,27 @@ class InteractiveMCPClient:
                     await self.get_usage_stats()
                 elif choice == '10':
                     await self.test_duration_aggregation()
-                elif choice.lower() in ['summary', 's', '📊']:
+                elif choice == '11':
+                    await self.analyze_top_users()
+                elif choice == '12':
+                    await self.analyze_new_users()
+                elif choice == '13':
+                    await self.analyze_inactive_users()
+                elif choice == '14':
+                    await self.analyze_weekly_additions()
+                elif choice == '15':
+                    await self.analyze_application_stats()
+                elif choice == '16':
+                    await self.analyze_platform_distribution()
+                elif choice == '17':
+                    await self.analyze_daily_trends()
+                elif choice == '18':
+                    await self.analyze_user_activity()
+                elif choice == '19':
+                    await self.analyze_system_overview()
+                elif choice == '20' or choice.lower() in ['summary', 's', '📊']:
                     await self.show_data_summary()
-                elif choice.lower() in ['test', 'auto', '🧪']:
+                elif choice == '21' or choice.lower() in ['test', 'auto', '🧪']:
                     await self.run_all_tests()
                 elif choice.lower() in ['exit', 'quit', 'q', 'x', '❌']:
                     print("👋 Goodbye!")

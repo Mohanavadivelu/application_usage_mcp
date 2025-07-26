@@ -615,6 +615,242 @@ class MCPClient:
             return content.get("result")
         return None
 
+    # =============================================================================
+    # ANALYTICS CONVENIENCE METHODS
+    # =============================================================================
+
+    async def get_top_users_analysis(self, app_name: str, limit: int = 10):
+        """
+        Get top N users by total usage time for a specific application.
+        
+        Args:
+            app_name (str): Name of the application to analyze
+            limit (int): Number of top users to return (default: 10)
+            
+        Returns:
+            Optional[List[dict]]: List of top users with usage statistics,
+                                 or None on failure
+        
+        Example:
+            top_users = await client.get_top_users_analysis("chrome.exe", 5)
+            if top_users:
+                for user in top_users:
+                    print(f"{user['user']}: {user['total_hours']} hours")
+        """
+        result = await self.call_tool("analyze_top_users", {
+            "app_name": app_name,
+            "limit": limit
+        })
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_new_users_analysis(self, start_date: str, end_date: str, app_name: str = None):
+        """
+        Find new users within a specified date range.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            Optional[List[dict]]: List of new users with their first entry dates,
+                                 or None on failure
+        
+        Example:
+            new_users = await client.get_new_users_analysis("2025-01-01", "2025-01-31")
+            if new_users:
+                print(f"Found {len(new_users)} new users this month")
+        """
+        args = {"start_date": start_date, "end_date": end_date}
+        if app_name:
+            args["app_name"] = app_name
+            
+        result = await self.call_tool("analyze_new_users", args)
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_inactive_users_analysis(self, cutoff_date: str, app_name: str = None):
+        """
+        Find users who haven't been active since a specific date.
+        
+        Args:
+            cutoff_date (str): Date in YYYY-MM-DD format (users inactive since this date)
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            Optional[List[dict]]: List of inactive users with last activity dates,
+                                 or None on failure
+        
+        Example:
+            inactive = await client.get_inactive_users_analysis("2025-01-01")
+            if inactive:
+                print(f"Found {len(inactive)} inactive users since New Year")
+        """
+        args = {"cutoff_date": cutoff_date}
+        if app_name:
+            args["app_name"] = app_name
+            
+        result = await self.call_tool("analyze_inactive_users", args)
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_weekly_additions_analysis(self, start_date: str, end_date: str):
+        """
+        Get weekly breakdown of new user registrations.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            
+        Returns:
+            Optional[List[dict]]: Weekly breakdown with new user counts,
+                                 or None on failure
+        
+        Example:
+            weekly_data = await client.get_weekly_additions_analysis("2025-01-01", "2025-01-31")
+            if weekly_data:
+                for week in weekly_data:
+                    print(f"Week {week['week']}: {week['new_users']} new users")
+        """
+        result = await self.call_tool("analyze_weekly_additions", {
+            "start_date": start_date,
+            "end_date": end_date
+        })
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_application_stats_analysis(self, app_name: str = None):
+        """
+        Get comprehensive usage statistics for applications.
+        
+        Args:
+            app_name (str, optional): Specific application to analyze, or None for all apps
+            
+        Returns:
+            Optional[List[dict]]: Application statistics with usage metrics,
+                                 or None on failure
+        
+        Example:
+            # Get stats for all applications
+            all_stats = await client.get_application_stats_analysis()
+            
+            # Get stats for specific application
+            chrome_stats = await client.get_application_stats_analysis("chrome.exe")
+        """
+        args = {}
+        if app_name:
+            args["app_name"] = app_name
+            
+        result = await self.call_tool("analyze_application_stats", args)
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_platform_distribution_analysis(self):
+        """
+        Get usage distribution across different platforms.
+        
+        Returns:
+            Optional[List[dict]]: Platform statistics with usage percentages,
+                                 or None on failure
+        
+        Example:
+            platforms = await client.get_platform_distribution_analysis()
+            if platforms:
+                for platform in platforms:
+                    print(f"{platform['platform']}: {platform['time_percentage']}% of total time")
+        """
+        result = await self.call_tool("analyze_platform_distribution", {})
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_daily_trends_analysis(self, start_date: str, end_date: str, app_name: str = None):
+        """
+        Get daily usage trends over a specified period.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format
+            end_date (str): End date in YYYY-MM-DD format
+            app_name (str, optional): Specific application to analyze
+            
+        Returns:
+            Optional[List[dict]]: Daily usage statistics,
+                                 or None on failure
+        
+        Example:
+            trends = await client.get_daily_trends_analysis("2025-01-01", "2025-01-31")
+            if trends:
+                for day in trends:
+                    print(f"{day['log_date']}: {day['active_users']} users, {day['total_hours']} hours")
+        """
+        args = {"start_date": start_date, "end_date": end_date}
+        if app_name:
+            args["app_name"] = app_name
+            
+        result = await self.call_tool("analyze_daily_trends", args)
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_user_activity_analysis(self, user_name: str):
+        """
+        Get comprehensive activity summary for a specific user.
+        
+        Args:
+            user_name (str): Username to analyze
+            
+        Returns:
+            Optional[dict]: User activity summary with app breakdown,
+                           or None on failure
+        
+        Example:
+            user_stats = await client.get_user_activity_analysis("john_doe")
+            if user_stats:
+                print(f"Total hours: {user_stats['total_hours']}")
+                print(f"Apps used: {user_stats['apps_used']}")
+        """
+        result = await self.call_tool("analyze_user_activity", {
+            "user_name": user_name
+        })
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
+    async def get_system_overview_analysis(self):
+        """
+        Get high-level system statistics and overview.
+        
+        Returns:
+            Optional[dict]: System-wide statistics with top users and apps,
+                           or None on failure
+        
+        Example:
+            overview = await client.get_system_overview_analysis()
+            if overview:
+                print(f"Total users: {overview['total_users']}")
+                print(f"Total hours: {overview['total_hours']}")
+                print(f"Top app: {overview['top_applications'][0]['application_name']}")
+        """
+        result = await self.call_tool("analyze_system_overview", {})
+        if result and "content" in result:
+            content = json.loads(result["content"][0]["text"])
+            return content.get("result")
+        return None
+
 
 # Example usage
 async def main():

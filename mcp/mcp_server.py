@@ -201,6 +201,148 @@ class MCPServer:
                     "type": "object",
                     "properties": {}
                 }
+            },
+            "analyze_top_users": {
+                "name": "analyze_top_users",
+                "description": "Get top N users by total usage time for a specific application",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app_name": {
+                            "type": "string",
+                            "description": "Name of the application to analyze"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Number of top users to return (default: 10)",
+                            "default": 10
+                        }
+                    },
+                    "required": ["app_name"]
+                }
+            },
+            "analyze_new_users": {
+                "name": "analyze_new_users",
+                "description": "Find new users within a specified date range",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date in YYYY-MM-DD format"
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date in YYYY-MM-DD format"
+                        },
+                        "app_name": {
+                            "type": "string",
+                            "description": "Optional: specific application to analyze"
+                        }
+                    },
+                    "required": ["start_date", "end_date"]
+                }
+            },
+            "analyze_inactive_users": {
+                "name": "analyze_inactive_users",
+                "description": "Find users who haven't been active since a specific date",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "cutoff_date": {
+                            "type": "string",
+                            "description": "Date in YYYY-MM-DD format (users inactive since this date)"
+                        },
+                        "app_name": {
+                            "type": "string",
+                            "description": "Optional: specific application to analyze"
+                        }
+                    },
+                    "required": ["cutoff_date"]
+                }
+            },
+            "analyze_weekly_additions": {
+                "name": "analyze_weekly_additions",
+                "description": "Get weekly breakdown of new user registrations",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date in YYYY-MM-DD format"
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date in YYYY-MM-DD format"
+                        }
+                    },
+                    "required": ["start_date", "end_date"]
+                }
+            },
+            "analyze_application_stats": {
+                "name": "analyze_application_stats",
+                "description": "Get comprehensive usage statistics for applications",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app_name": {
+                            "type": "string",
+                            "description": "Optional: specific application to analyze, or omit for all apps"
+                        }
+                    }
+                }
+            },
+            "analyze_platform_distribution": {
+                "name": "analyze_platform_distribution",
+                "description": "Get usage distribution across different platforms",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            "analyze_daily_trends": {
+                "name": "analyze_daily_trends",
+                "description": "Get daily usage trends over a specified period",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "Start date in YYYY-MM-DD format"
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "End date in YYYY-MM-DD format"
+                        },
+                        "app_name": {
+                            "type": "string",
+                            "description": "Optional: specific application to analyze"
+                        }
+                    },
+                    "required": ["start_date", "end_date"]
+                }
+            },
+            "analyze_user_activity": {
+                "name": "analyze_user_activity",
+                "description": "Get comprehensive activity summary for a specific user",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "user_name": {
+                            "type": "string",
+                            "description": "Username to analyze"
+                        }
+                    },
+                    "required": ["user_name"]
+                }
+            },
+            "analyze_system_overview": {
+                "name": "analyze_system_overview",
+                "description": "Get high-level system statistics and overview",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
             }
         }
         
@@ -529,6 +671,38 @@ class MCPServer:
                 result = self.db_manager.get_unique_applications()
             elif tool_name == "get_unique_platforms":
                 result = self.db_manager.get_unique_platforms()
+            elif tool_name == "analyze_top_users":
+                app_name = arguments.get("app_name")
+                limit = arguments.get("limit", 10)
+                result = self.db_manager.get_top_users_by_app(app_name, limit)
+            elif tool_name == "analyze_new_users":
+                start_date = arguments.get("start_date")
+                end_date = arguments.get("end_date")
+                app_name = arguments.get("app_name")
+                result = self.db_manager.get_new_users_in_period(start_date, end_date, app_name)
+            elif tool_name == "analyze_inactive_users":
+                cutoff_date = arguments.get("cutoff_date")
+                app_name = arguments.get("app_name")
+                result = self.db_manager.get_inactive_users_since(cutoff_date, app_name)
+            elif tool_name == "analyze_weekly_additions":
+                start_date = arguments.get("start_date")
+                end_date = arguments.get("end_date")
+                result = self.db_manager.get_user_additions_by_week(start_date, end_date)
+            elif tool_name == "analyze_application_stats":
+                app_name = arguments.get("app_name")
+                result = self.db_manager.get_application_usage_stats(app_name)
+            elif tool_name == "analyze_platform_distribution":
+                result = self.db_manager.get_platform_distribution()
+            elif tool_name == "analyze_daily_trends":
+                start_date = arguments.get("start_date")
+                end_date = arguments.get("end_date")
+                app_name = arguments.get("app_name")
+                result = self.db_manager.get_daily_usage_trends(start_date, end_date, app_name)
+            elif tool_name == "analyze_user_activity":
+                user_name = arguments.get("user_name")
+                result = self.db_manager.get_user_activity_summary(user_name)
+            elif tool_name == "analyze_system_overview":
+                result = self.db_manager.get_system_overview()
             else:
                 return self.create_error_response(
                     message_id, ErrorCode.INTERNAL_ERROR, f"Tool implementation missing: {tool_name}"

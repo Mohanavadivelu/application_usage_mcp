@@ -109,6 +109,776 @@ application_usage_mcp/
 
 ---
 
+## 4. Available MCP Tools & Analytics
+
+The system provides comprehensive tools for database operations and advanced analytics through the MCP protocol. All tools are accessible via the interactive client or programmatically through the MCP client.
+
+### 📝 Basic Database Operations
+
+#### 1. **create_usage_log** - Create New Usage Log Entry
+
+**Purpose**: Creates a new application usage log entry in the database.
+
+**Request Parameters**:
+```json
+{
+  "monitor_app_version": "1.0.0",    // REQUIRED: Version of monitoring tool
+  "platform": "Windows",             // REQUIRED: Operating system
+  "user": "john_doe",                 // REQUIRED: Username or device identifier
+  "application_name": "chrome.exe",   // REQUIRED: Name of the application
+  "application_version": "120.0.0",   // REQUIRED: Version of the application
+  "log_date": "2025-01-15",          // REQUIRED: Date in YYYY-MM-DD format
+  "legacy_app": false,               // REQUIRED: Whether app is legacy (true/false)
+  "duration_seconds": 3600           // REQUIRED: Usage duration in seconds
+}
+```
+
+**Note**: All parameters are required for creating a usage log entry.
+
+**Response Examples**:
+```json
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"result\": 123, \"tool\": \"create_usage_log\"}"
+      }
+    ]
+  }
+}
+```
+
+#### 2. **get_usage_logs** - Retrieve Usage Logs
+
+**Purpose**: Retrieves usage logs with optional filtering.
+
+**Request Parameters**:
+```json
+{
+  "filters": {                    // OPTIONAL: Object for filtering results
+    "application_name": "chrome.exe",  // OPTIONAL: Filter by application name
+    "platform": "Windows",            // OPTIONAL: Filter by platform
+    "user": "john_doe"                 // OPTIONAL: Filter by user
+  }
+}
+```
+
+**Note**: All parameters are optional. If no filters are provided, returns all usage logs.
+    "user": "john_doe"
+  }
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "id": 1,
+      "monitor_app_version": "1.0.0",
+      "platform": "Windows",
+      "user": "john_doe",
+      "application_name": "chrome.exe",
+      "application_version": "120.0.0",
+      "log_date": "2025-01-15",
+      "legacy_app": false,
+      "duration_seconds": 3600
+    },
+    {
+      "id": 2,
+      "monitor_app_version": "1.0.0",
+      "platform": "macOS",
+      "user": "alice_smith",
+      "application_name": "safari.app",
+      "application_version": "17.2",
+      "log_date": "2025-01-15",
+      "legacy_app": false,
+      "duration_seconds": 2400
+    },
+    {
+      "id": 3,
+      "monitor_app_version": "1.0.0",
+      "platform": "Windows",
+      "user": "bob_wilson",
+      "application_name": "firefox.exe",
+      "application_version": "121.0",
+      "log_date": "2025-01-14",
+      "legacy_app": false,
+      "duration_seconds": 1800
+    },
+    {
+      "id": 4,
+      "monitor_app_version": "1.0.0",
+      "platform": "Linux",
+      "user": "charlie_brown",
+      "application_name": "code",
+      "application_version": "1.85.0",
+      "log_date": "2025-01-14",
+      "legacy_app": false,
+      "duration_seconds": 7200
+    },
+    {
+      "id": 5,
+      "monitor_app_version": "1.0.0",
+      "platform": "Windows",
+      "user": "diana_prince",
+      "application_name": "notepad.exe",
+      "application_version": "10.0",
+      "log_date": "2025-01-13",
+      "legacy_app": true,
+      "duration_seconds": 600
+    }
+  ]
+}
+```
+
+#### 3. **update_usage_log** - Update Existing Log
+
+**Purpose**: Updates specific fields of an existing usage log.
+
+**Request Parameters**:
+```json
+{
+  "log_id": 123,                     // REQUIRED: ID of the log entry to update
+  "updates": {                       // REQUIRED: Object containing fields to update
+    "duration_seconds": 7200,        // OPTIONAL: New duration value
+    "application_version": "120.0.1" // OPTIONAL: New application version
+  }
+}
+```
+
+**Note**: `log_id` and `updates` object are required. Within `updates`, specify only the fields you want to change.
+
+**Response Examples**:
+```json
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"result\": true, \"tool\": \"update_usage_log\"}"
+      }
+    ]
+  }
+}
+```
+
+#### 4. **delete_usage_log** - Delete Usage Log
+
+**Purpose**: Permanently removes a usage log entry.
+
+**Request Parameters**:
+```json
+{
+  "log_id": 123                      // REQUIRED: ID of the log entry to delete
+}
+```
+
+**Response Examples**:
+```json
+{
+  "result": {
+    "content": [
+      {
+        "type": "text", 
+        "text": "{\"result\": true, \"tool\": \"delete_usage_log\"}"
+      }
+    ]
+  }
+}
+```
+
+### 📊 Advanced Analytics Tools
+
+#### 5. **analyze_top_users** - Top Users by Application
+
+**Purpose**: Get top N users by total usage time for a specific application.
+
+**Request Parameters**:
+```json
+{
+  "app_name": "chrome.exe",      // REQUIRED: Name of the application to analyze
+  "limit": 5                     // OPTIONAL: Number of users to return (default: 10)
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "user": "john_doe",
+      "session_count": 45,
+      "total_seconds": 163800,
+      "total_hours": 45.5
+    },
+    {
+      "user": "alice_smith", 
+      "session_count": 38,
+      "total_seconds": 133200,
+      "total_hours": 37.0
+    },
+    {
+      "user": "bob_wilson",
+      "session_count": 32,
+      "total_seconds": 115200,
+      "total_hours": 32.0
+    },
+    {
+      "user": "charlie_brown",
+      "session_count": 28,
+      "total_seconds": 100800,
+      "total_hours": 28.0
+    },
+    {
+      "user": "diana_prince",
+      "session_count": 25,
+      "total_seconds": 90000,
+      "total_hours": 25.0
+    }
+  ]
+}
+```
+
+#### 6. **analyze_new_users** - New User Analysis
+
+**Purpose**: Find users who started using the system within a date range.
+
+**Request Parameters**:
+```json
+{
+  "start_date": "2025-01-01",    // REQUIRED: Start date in YYYY-MM-DD format
+  "end_date": "2025-01-31",      // REQUIRED: End date in YYYY-MM-DD format
+  "app_name": "chrome.exe"       // OPTIONAL: Specific application to analyze
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "user": "new_user_1",
+      "first_entry_date": "2025-01-15",
+      "session_count": 12,
+      "total_seconds": 30600,
+      "total_hours": 8.5
+    },
+    {
+      "user": "new_user_2",
+      "first_entry_date": "2025-01-18",
+      "session_count": 18,
+      "total_seconds": 44280,
+      "total_hours": 12.3
+    },
+    {
+      "user": "new_user_3",
+      "first_entry_date": "2025-01-22",
+      "session_count": 8,
+      "total_seconds": 21600,
+      "total_hours": 6.0
+    },
+    {
+      "user": "new_user_4",
+      "first_entry_date": "2025-01-25",
+      "session_count": 15,
+      "total_seconds": 54000,
+      "total_hours": 15.0
+    },
+    {
+      "user": "new_user_5",
+      "first_entry_date": "2025-01-28",
+      "session_count": 5,
+      "total_seconds": 18000,
+      "total_hours": 5.0
+    }
+  ]
+}
+```
+
+#### 7. **analyze_inactive_users** - Inactive User Analysis
+
+**Purpose**: Find users who haven't been active since a specific date.
+
+**Request Parameters**:
+```json
+{
+  "cutoff_date": "2025-01-01",   // REQUIRED: Date in YYYY-MM-DD format (users inactive since this date)
+  "app_name": "chrome.exe"       // OPTIONAL: Specific application to analyze
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "user": "inactive_user_1",
+      "last_activity_date": "2024-12-28",
+      "total_sessions": 156,
+      "total_seconds": 561600,
+      "total_hours": 156.0
+    },
+    {
+      "user": "inactive_user_2",
+      "last_activity_date": "2024-12-25",
+      "total_sessions": 89,
+      "total_seconds": 320400,
+      "total_hours": 89.0
+    },
+    {
+      "user": "inactive_user_3",
+      "last_activity_date": "2024-12-20",
+      "total_sessions": 67,
+      "total_seconds": 241200,
+      "total_hours": 67.0
+    },
+    {
+      "user": "inactive_user_4",
+      "last_activity_date": "2024-12-15",
+      "total_sessions": 45,
+      "total_seconds": 162000,
+      "total_hours": 45.0
+    },
+    {
+      "user": "inactive_user_5",
+      "last_activity_date": "2024-12-10",
+      "total_sessions": 23,
+      "total_seconds": 82800,
+      "total_hours": 23.0
+    }
+  ]
+}
+```
+
+#### 8. **analyze_weekly_additions** - Weekly User Additions
+
+**Purpose**: Get weekly breakdown of new user registrations.
+
+**Request Parameters**:
+```json
+{
+  "start_date": "2025-01-01",    // REQUIRED: Start date in YYYY-MM-DD format
+  "end_date": "2025-01-31"       // REQUIRED: End date in YYYY-MM-DD format
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "week": "2025-W01",
+      "week_start": "2025-01-01",
+      "new_users": 12
+    },
+    {
+      "week": "2025-W02", 
+      "week_start": "2025-01-06",
+      "new_users": 18
+    },
+    {
+      "week": "2025-W03",
+      "week_start": "2025-01-13",
+      "new_users": 15
+    },
+    {
+      "week": "2025-W04",
+      "week_start": "2025-01-20",
+      "new_users": 22
+    },
+    {
+      "week": "2025-W05",
+      "week_start": "2025-01-27",
+      "new_users": 8
+    }
+  ]
+}
+```
+
+#### 9. **analyze_application_stats** - Application Usage Statistics
+
+**Purpose**: Get comprehensive usage statistics for applications.
+
+**Request Parameters**:
+```json
+{
+  "app_name": "chrome.exe"       // OPTIONAL: Specific application to analyze (omit for all apps)
+}
+```
+
+**Note**: If `app_name` is omitted, returns statistics for all applications.
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "application_name": "chrome.exe",
+      "unique_users": 245,
+      "total_sessions": 1567,
+      "total_seconds": 5641200,
+      "total_hours": 1567.0,
+      "avg_session_minutes": 60.0,
+      "first_usage": "2024-12-01",
+      "last_usage": "2025-01-31"
+    },
+    {
+      "application_name": "firefox.exe",
+      "unique_users": 189,
+      "total_sessions": 892,
+      "total_seconds": 3211200,
+      "total_hours": 892.0,
+      "avg_session_minutes": 60.0,
+      "first_usage": "2024-12-01",
+      "last_usage": "2025-01-30"
+    },
+    {
+      "application_name": "code.exe",
+      "unique_users": 156,
+      "total_sessions": 2341,
+      "total_seconds": 8427600,
+      "total_hours": 2341.0,
+      "avg_session_minutes": 60.0,
+      "first_usage": "2024-12-01",
+      "last_usage": "2025-01-31"
+    },
+    {
+      "application_name": "notepad.exe",
+      "unique_users": 78,
+      "total_sessions": 234,
+      "total_seconds": 842400,
+      "total_hours": 234.0,
+      "avg_session_minutes": 60.0,
+      "first_usage": "2024-12-01",
+      "last_usage": "2025-01-29"
+    },
+    {
+      "application_name": "safari.app",
+      "unique_users": 123,
+      "total_sessions": 567,
+      "total_seconds": 2041200,
+      "total_hours": 567.0,
+      "avg_session_minutes": 60.0,
+      "first_usage": "2024-12-01",
+      "last_usage": "2025-01-31"
+    }
+  ]
+}
+```
+
+#### 10. **analyze_platform_distribution** - Platform Usage Distribution
+
+**Purpose**: Get usage distribution across different platforms.
+
+**Request Parameters**:
+```json
+{}
+```
+
+**Note**: No parameters required. Returns distribution for all platforms.
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "platform": "Windows",
+      "unique_users": 456,
+      "total_sessions": 2876,
+      "total_seconds": 10353600,
+      "total_hours": 2876.0,
+      "session_percentage": 65.4,
+      "time_percentage": 68.2
+    },
+    {
+      "platform": "macOS",
+      "unique_users": 234,
+      "total_sessions": 1123,
+      "total_seconds": 4042800,
+      "total_hours": 1123.0,
+      "session_percentage": 25.5,
+      "time_percentage": 26.6
+    },
+    {
+      "platform": "Linux",
+      "unique_users": 123,
+      "total_sessions": 345,
+      "total_seconds": 1242000,
+      "total_hours": 345.0,
+      "session_percentage": 7.8,
+      "time_percentage": 8.2
+    },
+    {
+      "platform": "Android",
+      "unique_users": 89,
+      "total_sessions": 234,
+      "total_seconds": 842400,
+      "total_hours": 234.0,
+      "session_percentage": 5.3,
+      "time_percentage": 5.5
+    },
+    {
+      "platform": "iOS",
+      "unique_users": 67,
+      "total_sessions": 156,
+      "total_seconds": 561600,
+      "total_hours": 156.0,
+      "session_percentage": 3.5,
+      "time_percentage": 3.7
+    }
+  ]
+}
+```
+
+#### 11. **analyze_daily_trends** - Daily Usage Trends
+
+**Purpose**: Get daily usage trends over a specified period.
+
+**Request Parameters**:
+```json
+{
+  "start_date": "2025-01-01",    // REQUIRED: Start date in YYYY-MM-DD format
+  "end_date": "2025-01-07",      // REQUIRED: End date in YYYY-MM-DD format
+  "app_name": "chrome.exe"       // OPTIONAL: Specific application to analyze
+}
+```
+
+**Response Examples** (5 sample records):
+```json
+{
+  "result": [
+    {
+      "log_date": "2025-01-01",
+      "active_users": 234,
+      "total_sessions": 567,
+      "total_seconds": 2041200,
+      "total_hours": 567.0,
+      "avg_session_minutes": 60.0
+    },
+    {
+      "log_date": "2025-01-02",
+      "active_users": 189,
+      "total_sessions": 445,
+      "total_seconds": 1602000,
+      "total_hours": 445.0,
+      "avg_session_minutes": 60.0
+    },
+    {
+      "log_date": "2025-01-03",
+      "active_users": 267,
+      "total_sessions": 623,
+      "total_seconds": 2242800,
+      "total_hours": 623.0,
+      "avg_session_minutes": 60.0
+    },
+    {
+      "log_date": "2025-01-04",
+      "active_users": 298,
+      "total_sessions": 734,
+      "total_seconds": 2642400,
+      "total_hours": 734.0,
+      "avg_session_minutes": 60.0
+    },
+    {
+      "log_date": "2025-01-05",
+      "active_users": 156,
+      "total_sessions": 378,
+      "total_seconds": 1360800,
+      "total_hours": 378.0,
+      "avg_session_minutes": 60.0
+    }
+  ]
+}
+```
+
+#### 12. **analyze_user_activity** - Individual User Activity Summary
+
+**Purpose**: Get comprehensive activity summary for a specific user.
+
+**Request Parameters**:
+```json
+{
+  "user_name": "john_doe"        // REQUIRED: Username to analyze
+}
+```
+
+**Response Examples**:
+```json
+{
+  "result": {
+    "user": "john_doe",
+    "total_sessions": 156,
+    "apps_used": 8,
+    "platforms_used": 2,
+    "total_seconds": 561600,
+    "total_hours": 156.0,
+    "avg_session_minutes": 60.0,
+    "first_activity": "2024-12-01",
+    "last_activity": "2025-01-31",
+    "application_breakdown": [
+      {
+        "application_name": "chrome.exe",
+        "sessions": 89,
+        "total_seconds": 320400,
+        "total_hours": 89.0
+      },
+      {
+        "application_name": "code.exe",
+        "sessions": 34,
+        "total_seconds": 122400,
+        "total_hours": 34.0
+      },
+      {
+        "application_name": "firefox.exe",
+        "sessions": 23,
+        "total_seconds": 82800,
+        "total_hours": 23.0
+      },
+      {
+        "application_name": "notepad.exe",
+        "sessions": 10,
+        "total_seconds": 36000,
+        "total_hours": 10.0
+      }
+    ]
+  }
+}
+```
+
+#### 13. **analyze_system_overview** - System-Wide Statistics
+
+**Purpose**: Get high-level system statistics and overview.
+
+**Request Parameters**:
+```json
+{}
+```
+
+**Note**: No parameters required. Returns system-wide statistics.
+
+**Response Examples**:
+```json
+{
+  "result": {
+    "total_records": 12456,
+    "total_users": 1234,
+    "total_applications": 45,
+    "total_platforms": 5,
+    "total_seconds": 44841600,
+    "total_hours": 12456.0,
+    "avg_session_minutes": 60.0,
+    "earliest_record": "2024-12-01",
+    "latest_record": "2025-01-31",
+    "top_applications": [
+      {
+        "application_name": "chrome.exe",
+        "sessions": 3456
+      },
+      {
+        "application_name": "code.exe",
+        "sessions": 2890
+      },
+      {
+        "application_name": "firefox.exe",
+        "sessions": 1567
+      },
+      {
+        "application_name": "safari.app",
+        "sessions": 1234
+      },
+      {
+        "application_name": "notepad.exe",
+        "sessions": 890
+      }
+    ],
+    "top_users": [
+      {
+        "user": "john_doe",
+        "sessions": 234
+      },
+      {
+        "user": "alice_smith", 
+        "sessions": 198
+      },
+      {
+        "user": "bob_wilson",
+        "sessions": 167
+      },
+      {
+        "user": "charlie_brown",
+        "sessions": 145
+      },
+      {
+        "user": "diana_prince",
+        "sessions": 134
+      }
+    ]
+  }
+}
+```
+
+### 🔍 Utility Tools
+
+#### 14. **get_unique_users** - List All Users
+
+**Purpose**: Get list of unique users from the database.
+
+**Request Parameters**:
+```json
+{}
+```
+
+**Note**: No parameters required. Returns all unique users.
+
+**Response Examples**:
+```json
+{
+  "result": ["alice_smith", "bob_wilson", "charlie_brown", "diana_prince", "john_doe"]
+}
+```
+
+#### 15. **get_unique_applications** - List All Applications
+
+**Purpose**: Get list of unique applications from the database.
+
+**Request Parameters**:
+```json
+{}
+```
+
+**Note**: No parameters required. Returns all unique applications.
+
+**Response Examples**:
+```json
+{
+  "result": ["chrome.exe", "code.exe", "firefox.exe", "notepad.exe", "safari.app"]
+}
+```
+
+#### 16. **get_unique_platforms** - List All Platforms
+
+**Purpose**: Get list of unique platforms from the database.
+
+**Request Parameters**:
+```json
+{}
+```
+
+**Note**: No parameters required. Returns all unique platforms.
+
+**Response Examples**:
+```json
+{
+  "result": ["Android", "Linux", "Windows", "iOS", "macOS"]
+}
+```
+
+---
+
+## 5. Component Details
+
 ## 4. Documentation
 
 ### Core Files Documentation
