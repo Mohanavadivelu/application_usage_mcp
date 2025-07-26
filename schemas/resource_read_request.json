@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Resource Read Request",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string",
+      "const": "resources/read"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string"
+        }
+      },
+      "required": ["uri"]
+    }
+  },
+  "required": ["jsonrpc", "id", "method", "params"]
+}

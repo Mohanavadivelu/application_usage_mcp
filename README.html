@@ -365,246 +365,661 @@ code {
           : 'default'
     });
   </script>
-<h1 id="modular-application-usage-mcp-system">Modular Application Usage MCP System</h1>
-<p>This project is a modular, message-oriented system for logging and retrieving application usage data. It is composed of three core, decoupled modules: a database manager, an MCP (Model Context Protocol) messaging layer, and a future-proof structure for adding frontends.</p>
-<h2 id="architecture">Architecture</h2>
-<p>The system is designed with loose coupling and high cohesion in mind. Each module operates independently and communicates only through the MCP layer. This makes the system scalable, testable, and easy to maintain.</p>
-<h3 id="architectural-benefits-mcp-vs-monolithic">Architectural Benefits (MCP vs. Monolithic)</h3>
-<p>This section explains the trade-offs of using the MCP architecture for this project compared to a traditional, monolithic design.</p>
-<h4 id="monolithic-approach-without-mcp">Monolithic Approach (Without MCP)</h4>
-<p>In a monolithic design, a frontend would directly import and call the <code>DatabaseManager</code>.</p>
+<h1 id="application-usage-mcp-system">Application Usage MCP System</h1>
+<h2 id="1-project-overview">1. Project Overview</h2>
+<p>The <strong>Application Usage MCP System</strong> is a production-ready implementation of the Model Context Protocol (MCP) designed for tracking and managing application usage data. This system provides a secure, standards-compliant interface that enables AI assistants to interact with application usage logs through a well-defined protocol.</p>
+<h3 id="key-features">Key Features:</h3>
 <ul>
-<li><strong>Advantages</strong>:
-<ul>
-<li><strong>Simplicity</strong>: Fewer moving parts and less initial setup for a very small project.</li>
+<li><strong>Full MCP Protocol Compliance</strong>: Implements the official MCP specification with JSON-RPC 2.0</li>
+<li><strong>Secure Operations</strong>: Input validation, schema validation, and explicit command whitelisting</li>
+<li><strong>Tool System</strong>: Database operations exposed as standardized MCP tools</li>
+<li><strong>Resource System</strong>: Real-time usage statistics accessible as MCP resources</li>
+<li><strong>Database Management</strong>: SQLite database with automatic schema migration</li>
+<li><strong>Async Architecture</strong>: Built on Python's asyncio for high performance</li>
+<li><strong>Comprehensive Testing</strong>: Full test suite ensuring protocol compliance</li>
 </ul>
-</li>
-<li><strong>Disadvantages</strong>:
-<ul>
-<li><strong>Tight Coupling</strong>: The frontend is directly dependent on the database logic. Any change to the <code>DatabaseManager</code> class could require changes to the frontend.</li>
-<li><strong>Poor Scalability</strong>: It is difficult to add new, independent services (e.g., a notification service) or distribute components across different machines.</li>
-<li><strong>Difficult to Test</strong>: The frontend and database logic cannot be easily tested in isolation.</li>
-<li><strong>Technology Lock-in</strong>: The frontend must be written in a language compatible with the backend (e.g., both in Python).</li>
-</ul>
-</li>
-</ul>
-<h4 id="modular-approach-with-mcp">Modular Approach (With MCP)</h4>
-<p>In our current architecture, modules communicate via standardized JSON messages, with no direct dependencies.</p>
-<ul>
-<li><strong>Advantages</strong>:
-<ul>
-<li><strong>Loose Coupling</strong>: Modules are completely independent. The database can be swapped (e.g., from SQLite to PostgreSQL) with zero changes to any other module.</li>
-<li><strong>High Scalability</strong>: New modules can be added easily. They just need to connect to the MCP server and handle specific messages.</li>
-<li><strong>Improved Testability</strong>: Each module can be tested independently.</li>
-<li><strong>Language Agnostic</strong>: A new frontend could be written in any language (e.g., JavaScript, C#) as long as it can send JSON over a TCP socket.</li>
-</ul>
-</li>
-<li><strong>Disadvantages</strong>:
-<ul>
-<li><strong>Increased Complexity</strong>: More initial setup and boilerplate code are required.</li>
-<li><strong>Overhead</strong>: A small performance overhead exists due to network communication and JSON processing compared to a direct in-process function call.</li>
-</ul>
-</li>
-</ul>
-<h3 id="component-responsibilities-and-data-flow">Component Responsibilities and Data Flow</h3>
-<p>This section details the role of each component in processing a request.</p>
-<h4 id="block-diagram">Block Diagram</h4>
-<pre class="hljs"><code><div>@startuml
-!theme plain
-
-package &quot;Application Modules&quot; {
-  [Frontend Module] as Frontend
-  [Database Module] as DB
-  [MCP Server] as Server
-  [MCP Client] as Client
-}
-
-database &quot;SQLite DB&quot; as SQLite
-
-Frontend ..&gt; Client : uses
-Client ..&gt; Server : sends (JSON String)
-Server ..&gt; DB : calls (Python Dictionary)
-DB ..&gt; SQLite : executes (SQL Query)
-
-@enduml
-</div></code></pre>
-<h4 id="step-by-step-data-flow">Step-by-Step Data Flow</h4>
-<ol>
-<li>
-<p><strong>Frontend Module (The Initiator)</strong></p>
-<ul>
-<li>The process begins in a client module (e.g., a future web frontend or the current test scripts).</li>
-<li>It constructs a standard Python dictionary representing the desired action (e.g., <code>{'module': 'database', 'command': 'create_usage_log', ...}</code>).</li>
-<li>It passes this dictionary to an instance of the <code>MCPClient</code>.</li>
-</ul>
-</li>
-<li>
-<p><strong>MCP Client (The Messenger)</strong></p>
-<ul>
-<li><strong>Responsibility</strong>: To handle the mechanics of communication.</li>
-<li>It takes the Python dictionary.</li>
-<li>It serializes the dictionary into a JSON formatted string.</li>
-<li>It opens a TCP network connection to the <code>MCPServer</code>.</li>
-<li>It sends the JSON string over the network and waits for a response.</li>
-</ul>
-</li>
-<li>
-<p><strong>MCP Server (The Router)</strong></p>
-<ul>
-<li><strong>Responsibility</strong>: To listen for requests and delegate tasks.</li>
-<li>It receives the JSON string from the network connection.</li>
-<li>It deserializes the JSON back into a Python dictionary.</li>
-<li>It inspects the <code>module</code> and <code>command</code> keys to understand the request.</li>
-<li>It calls the appropriate method on its internal instance of the <code>DatabaseManager</code>, passing the <code>payload</code> dictionary.</li>
-</ul>
-</li>
-<li>
-<p><strong>Database Module (The Worker)</strong></p>
-<ul>
-<li><strong>Responsibility</strong>: To execute the core business logic.</li>
-<li>It receives a simple Python dictionary from the <code>MCPServer</code>. It has no knowledge of the network, JSON, or where the request came from.</li>
-<li>It performs the requested database operation (e.g., constructs and executes an SQL <code>INSERT</code> statement).</li>
-<li>It returns a simple Python object (like a <code>list</code> or <code>int</code>) to the <code>MCPServer</code>.</li>
-</ul>
-</li>
-<li>
-<p><strong>The Response Journey</strong></p>
-<ul>
-<li>The <code>MCPServer</code> takes the return value from the <code>DatabaseManager</code>, wraps it in a response dictionary, and sends it back to the <code>MCPClient</code> as a JSON string.</li>
-<li>The <code>MCPClient</code> receives the JSON response, deserializes it into a Python dictionary, and returns it to the original caller (the Frontend Module).</li>
-</ul>
-</li>
-</ol>
-<h3 id="class-diagram">Class Diagram</h3>
-<pre class="hljs"><code><div>@startuml
-skinparam classAttributeIconSize 0
-
-class MCPServer {
-  +host: str
-  +port: int
-  +db_manager: DatabaseManager
-  +start()
-  +shutdown()
-  +handle_client()
-  +process_request()
-}
-
-class MCPClient {
-  +host: str
-  +port: int
-  +send_request(data)
-}
-
-class DatabaseManager {
-  +db_path: str
-  +conn: Connection
-  +connect()
-  +disconnect()
-  +initialize_database()
-  +create_usage_log(data)
-  +get_usage_logs(filters)
-  +update_usage_log(id, updates)
-  +delete_usage_log(id)
-}
-
-package &quot;config&quot; {
-  class settings &lt;&lt;Module&gt;&gt; {
-    +DB_NAME
-    +DB_PATH
-    +SCHEMA_PATH
-    +MCP_HOST
-    +MCP_PORT
-  }
-}
-
-MCPServer &quot;1&quot; *-- &quot;1&quot; DatabaseManager
-MCPClient ..&gt; MCPServer
-MCPServer ..&gt; settings
-MCPClient ..&gt; settings
-DatabaseManager ..&gt; settings
-
-@enduml
-</div></code></pre>
-<h3 id="sequence-diagram">Sequence Diagram</h3>
-<pre class="hljs"><code><div>@startuml
-title Data Transformation Flow
-
-actor Client as &quot;Frontend/Test&quot;
-participant MCPClient
-participant MCPServer
-participant DatabaseManager
-
-Client -&gt; MCPClient : send_request(dict)
-note right of Client : Python Dictionary
-
-activate MCPClient
-MCPClient -&gt; MCPServer : send(json_string)
-note left of MCPServer : JSON over TCP
-deactivate MCPClient
-
-activate MCPServer
-MCPServer -&gt; DatabaseManager : command(payload_dict)
-note right of MCPServer : Python Dictionary
-deactivate MCPServer
-
-activate DatabaseManager
-DatabaseManager -&gt; DatabaseManager : Executes SQL
-note right of DatabaseManager : SQL Query
-DatabaseManager --&gt; MCPServer : returns result
-deactivate DatabaseManager
-
-activate MCPServer
-MCPServer --&gt; MCPClient : returns json_string
-deactivate MCPServer
-
-activate MCPClient
-MCPClient --&gt; Client : returns dict
-deactivate MCPClient
-
-@enduml
-</div></code></pre>
-<h2 id="project-structure">Project Structure</h2>
+<hr>
+<h2 id="2-folder-structure">2. Folder Structure</h2>
 <pre class="hljs"><code><div>application_usage_mcp/
-|-- config/
-|   |-- __init__.py
-|   |-- settings.py         # Centralized configuration
-|-- database/
-|   |-- __init__.py
-|   |-- db_manager.py       # Handles all database operations
-|   |-- schema.sql          # SQL schema for the database
-|-- mcp/
-|   |-- __init__.py
-|   |-- mcp_client.py       # Client for sending requests to the server
-|   |-- mcp_server.py       # Core message-passing server
-|-- tests/
-|   |-- __init__.py
-|   |-- test_db_manager.py  # Unit tests for the database
-|   |-- test_mcp_integration.py # End-to-end integration test
-|-- .gitignore              # Git ignore file
-|-- main.py                 # Main entry point to start the server
-|-- README.md               # This file
+├── README.md                           # This documentation file
+├── requirements.txt                    # Python dependencies
+├── main.py                            # Application entry point
+├── usage.db                           # SQLite database (auto-created)
+│
+├── config/                            # Configuration management
+│   ├── __init__.py                    # Package initialization
+│   └── settings.py                    # Application settings and constants
+│
+├── database/                          # Database layer
+│   ├── __init__.py                    # Package initialization
+│   ├── db_manager.py                  # Database operations manager
+│   └── schema.sql                     # Database schema definition
+│
+├── mcp/                               # MCP protocol implementation
+│   ├── __init__.py                    # Package initialization
+│   ├── mcp_server.py                  # MCP protocol server
+│   └── mcp_client.py                  # MCP protocol client
+│
+├── schemas/                           # JSON schema validation
+│   ├── __init__.py                    # Package initialization
+│   ├── validator.py                   # Schema validation utilities
+│   ├── initialize_request.json        # Initialize request schema
+│   ├── tool_call_request.json         # Tool call request schema
+│   └── resource_read_request.json     # Resource read request schema
+│
+└── examples/                          # Usage examples and utilities
+    ├── start_server.py                # Server startup script
+    └── client_usage.py                # Client usage examples
 </div></code></pre>
-<h2 id="setup-and-usage">Setup and Usage</h2>
-<h3 id="1-prerequisites">1. Prerequisites</h3>
+<h3 id="folder-purposes">Folder Purposes:</h3>
 <ul>
-<li>Python 3.10+</li>
+<li><strong><code>config/</code></strong>: Contains application configuration and settings</li>
+<li><strong><code>database/</code></strong>: Database abstraction layer and schema management</li>
+<li><strong><code>mcp/</code></strong>: Core MCP protocol implementation (server and client)</li>
+<li><strong><code>schemas/</code></strong>: JSON schema definitions for request validation</li>
+<li><strong><code>examples/</code></strong>: Practical usage examples and helper scripts</li>
 </ul>
-<h3 id="2-installation">2. Installation</h3>
-<p>No external libraries are required for the core modules.</p>
-<h3 id="3-configuration">3. Configuration</h3>
-<p>All settings can be modified in <code>config/settings.py</code>.</p>
-<h3 id="4-running-the-application">4. Running the Application</h3>
-<p><strong>Start the Server:</strong>
-Open a terminal and run:</p>
-<pre class="hljs"><code><div>python main.py
+<hr>
+<h2 id="3-documentation">3. Documentation</h2>
+<h3 id="core-files-documentation">Core Files Documentation</h3>
+<h4 id="mainpy"><code>main.py</code></h4>
+<p><strong>Purpose</strong>: Application entry point that initializes and starts the MCP server.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Functionality:</span>
+- Configures logging
+- Initializes MCPServer instance
+- Starts the <span class="hljs-keyword">async</span> event loop
+- Handles graceful shutdown
 </div></code></pre>
-<p>The server will start and listen on the host and port defined in the configuration.</p>
-<h3 id="5-running-tests">5. Running Tests</h3>
-<p><strong>Run all tests:</strong>
-To ensure the system is working correctly, run the test suite from the project root directory:</p>
-<pre class="hljs"><code><div>python -m unittest discover tests
+<h4 id="configsettingspy"><code>config/settings.py</code></h4>
+<p><strong>Purpose</strong>: Centralized configuration management for the entire application.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Configuration includes:</span>
+- Database settings (path, name, schema location)
+- MCP server settings (host, port)
+- Protocol constants <span class="hljs-keyword">and</span> defaults
 </div></code></pre>
-<p>This command will automatically discover and run all unit and integration tests.</p>
+<h4 id="databasedbmanagerpy"><code>database/db_manager.py</code></h4>
+<p><strong>Purpose</strong>: Database abstraction layer providing CRUD operations for usage logs.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Key Methods:</span>
+- initialize_database(): Sets up database schema
+- create_usage_log(): Creates new usage entries
+- get_usage_logs(): Retrieves logs <span class="hljs-keyword">with</span> optional filtering
+- update_usage_log(): Updates existing log entries
+- delete_usage_log(): Removes log entries
+</div></code></pre>
+<h3 id="database-schema">Database Schema</h3>
+<p>The database uses the following schema for tracking application usage across different platforms and applications:</p>
+<h4 id="table-usagedata">Table: <code>usage_data</code></h4>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>INTEGER</td>
+<td>PRIMARY KEY AUTOINCREMENT</td>
+<td>Unique identifier for each usage record</td>
+</tr>
+<tr>
+<td><code>monitor_app_version</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>Version of the monitoring tool that logged the data</td>
+</tr>
+<tr>
+<td><code>platform</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>Operating system (e.g., Windows, macOS, Android)</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>Username or device ID</td>
+</tr>
+<tr>
+<td><code>application_name</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>Name of the application (e.g., chrome.exe)</td>
+</tr>
+<tr>
+<td><code>application_version</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>Application version number</td>
+</tr>
+<tr>
+<td><code>log_date</code></td>
+<td>TEXT</td>
+<td>NOT NULL</td>
+<td>ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)</td>
+</tr>
+<tr>
+<td><code>legacy_app</code></td>
+<td>BOOLEAN</td>
+<td>NOT NULL</td>
+<td>Indicates if the application is legacy (true/false)</td>
+</tr>
+<tr>
+<td><code>duration_seconds</code></td>
+<td>INTEGER</td>
+<td>NOT NULL</td>
+<td>Usage time in seconds</td>
+</tr>
+</tbody>
+</table>
+<h4 id="database-indexes">Database Indexes</h4>
+<table>
+<thead>
+<tr>
+<th>Index Name</th>
+<th>Column(s)</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>idx_usage_app</code></td>
+<td><code>application_name</code></td>
+<td>Efficient application-based queries</td>
+</tr>
+<tr>
+<td><code>idx_usage_user</code></td>
+<td><code>user</code></td>
+<td>User-based filtering and analytics</td>
+</tr>
+<tr>
+<td><code>idx_usage_date</code></td>
+<td><code>log_date</code></td>
+<td>Time-based queries and reporting</td>
+</tr>
+<tr>
+<td><code>idx_usage_platform</code></td>
+<td><code>platform</code></td>
+<td>Platform-specific analysis</td>
+</tr>
+</tbody>
+</table>
+<h4 id="example-data">Example Data</h4>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,
+  <span class="hljs-attr">"monitor_app_version"</span>: <span class="hljs-string">"1.0.0"</span>,
+  <span class="hljs-attr">"platform"</span>: <span class="hljs-string">"Windows"</span>,
+  <span class="hljs-attr">"user"</span>: <span class="hljs-string">"john_doe"</span>,
+  <span class="hljs-attr">"application_name"</span>: <span class="hljs-string">"chrome.exe"</span>,
+  <span class="hljs-attr">"application_version"</span>: <span class="hljs-string">"119.0.6045.105"</span>,
+  <span class="hljs-attr">"log_date"</span>: <span class="hljs-string">"2025-07-27T10:30:00Z"</span>,
+  <span class="hljs-attr">"legacy_app"</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">"duration_seconds"</span>: <span class="hljs-number">3600</span>
+}
+</div></code></pre>
+<h4 id="query-examples">Query Examples</h4>
+<pre class="hljs"><code><div><span class="hljs-comment">-- Get all Chrome usage logs</span>
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> usage_data <span class="hljs-keyword">WHERE</span> application_name = <span class="hljs-string">'chrome.exe'</span>;
+
+<span class="hljs-comment">-- Get usage logs for a specific user on Windows</span>
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> usage_data <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span> = <span class="hljs-string">'john_doe'</span> <span class="hljs-keyword">AND</span> platform = <span class="hljs-string">'Windows'</span>;
+
+<span class="hljs-comment">-- Get legacy applications only</span>
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> usage_data <span class="hljs-keyword">WHERE</span> legacy_app = <span class="hljs-number">1</span>;
+
+<span class="hljs-comment">-- Get usage logs from the last 24 hours</span>
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> usage_data 
+<span class="hljs-keyword">WHERE</span> log_date &gt;= datetime(<span class="hljs-string">'now'</span>, <span class="hljs-string">'-1 day'</span>)
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> log_date <span class="hljs-keyword">DESC</span>;
+
+<span class="hljs-comment">-- Get total usage time per application</span>
+<span class="hljs-keyword">SELECT</span> application_name, <span class="hljs-keyword">SUM</span>(duration_seconds) <span class="hljs-keyword">as</span> total_seconds
+<span class="hljs-keyword">FROM</span> usage_data 
+<span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> application_name 
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> total_seconds <span class="hljs-keyword">DESC</span>;
+</div></code></pre>
+<h4 id="mcpmcpserverpy"><code>mcp/mcp_server.py</code></h4>
+<p><strong>Purpose</strong>: Complete MCP protocol server implementation with JSON-RPC 2.0 compliance.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Key Components:</span>
+- MCPServer <span class="hljs-class"><span class="hljs-keyword">class</span>:</span> Main server implementation
+- Message handling: Process all MCP message types
+- Tool system: Expose database operations <span class="hljs-keyword">as</span> MCP tools
+- Resource system: Provide usage statistics <span class="hljs-keyword">as</span> resources
+- Security: Input validation <span class="hljs-keyword">and</span> error handling
+</div></code></pre>
+<h4 id="mcpmcpclientpy"><code>mcp/mcp_client.py</code></h4>
+<p><strong>Purpose</strong>: MCP protocol client for interacting with the server programmatically.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Key Features:</span>
+- Connection management <span class="hljs-keyword">with</span> auto-reconnection
+- Protocol handshake <span class="hljs-keyword">and</span> initialization
+- Tool discovery <span class="hljs-keyword">and</span> execution
+- Resource reading capabilities
+- Convenience methods <span class="hljs-keyword">for</span> database operations
+</div></code></pre>
+<h4 id="schemasvalidatorpy"><code>schemas/validator.py</code></h4>
+<p><strong>Purpose</strong>: JSON schema validation utilities for ensuring message compliance.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Validation Functions:</span>
+- validate_initialize_request(): Validates handshake messages
+- validate_tool_call_request(): Validates tool execution requests
+- validate_resource_read_request(): Validates resource access requests
+</div></code></pre>
+<hr>
+<h2 id="4-architecture">4. Architecture</h2>
+<h3 id="system-architecture-overview">System Architecture Overview</h3>
+<p>The system follows a <strong>layered architecture</strong> with clear separation of concerns:</p>
+<pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
+│                    MCP CLIENT LAYER                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   AI Assistant  │  │  Python Client  │  │  Web Client  │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ JSON-RPC 2.0 / TCP
+                                │
+┌──────────────────────────────────────────────────────────────┐
+│                   MCP SERVER LAYER                           │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                 MCPServer                               │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │ │
+│  │  │  Message    │  │   Tool      │  │    Resource     │  │ │
+│  │  │  Handler    │  │   System    │  │    System       │  │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘  │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+                                │
+                                │ Method Calls
+                                │
+┌──────────────────────────────────────────────────────────────┐
+│                  DATABASE LAYER                              │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │               DatabaseManager                           │ │
+│  │  ┌─────────────┐  ┌─────────────────┐                  │ │
+│  │  │   CRUD      │  │   Connection    │                  │ │
+│  │  │ Operations  │  │   Manager       │                  │ │
+│  │  └─────────────┘  └─────────────────┘                  │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+                                │
+                                │ SQL
+                                │
+┌─────────────────────────────────────────────────────────────┐
+│                   STORAGE LAYER                             │
+│                    SQLite Database                          │
+│                     (usage.db)                              │
+└─────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<h3 id="class-diagram-ascii-art">Class Diagram (ASCII Art)</h3>
+<pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
+│                       MCPServer                             │
+├─────────────────────────────────────────────────────────────┤
+│ - host: str                                                 │
+│ - port: int                                                 │
+│ - db_manager: DatabaseManager                               │
+│ - initialized: bool                                         │
+│ - tools: Dict[str, Dict]                                    │
+│ - resources: Dict[str, Dict]                                │
+├─────────────────────────────────────────────────────────────┤
+│ + handle_client(reader, writer)                             │
+│ + process_message(message) -&gt; Dict                          │
+│ + handle_initialize(id, params) -&gt; Dict                     │
+│ + handle_tools_list(id) -&gt; Dict                             │
+│ + handle_tools_call(id, params) -&gt; Dict                     │
+│ + handle_resources_list(id) -&gt; Dict                         │
+│ + handle_resources_read(id, params) -&gt; Dict                 │
+│ + start()                                                   │
+│ + shutdown()                                                │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ uses
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    DatabaseManager                          │
+├─────────────────────────────────────────────────────────────┤
+│ - db_path: str                                              │
+│ - conn: sqlite3.Connection                                  │
+│ - logger: Logger                                            │
+├─────────────────────────────────────────────────────────────┤
+│ + connect()                                                 │
+│ + disconnect()                                              │
+│ + initialize_database()                                     │
+│ + create_usage_log(data) -&gt; int                             │
+│ + get_usage_logs(filters) -&gt; List[Dict]                     │
+│ + update_usage_log(id, updates) -&gt; bool                     │
+│ + delete_usage_log(id) -&gt; bool                              │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ creates/manages
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       MCPClient                             │
+├─────────────────────────────────────────────────────────────┤
+│ - host: str                                                 │
+│ - port: int                                                 │
+│ - reader: StreamReader                                      │
+│ - writer: StreamWriter                                      │
+│ - initialized: bool                                         │
+│ - available_tools: List[Dict]                               │
+│ - available_resources: List[Dict]                           │
+├─────────────────────────────────────────────────────────────┤
+│ + connect() -&gt; bool                                         │
+│ + disconnect()                                              │
+│ + initialize() -&gt; bool                                      │
+│ + send_request(request) -&gt; Dict                             │
+│ + call_tool(name, args) -&gt; Dict                             │
+│ + read_resource(uri) -&gt; Dict                                │
+│ + create_usage_log(data) -&gt; int                             │
+│ + get_usage_logs(filters) -&gt; List[Dict]                     │
+│ + update_usage_log(id, updates) -&gt; bool                     │
+│ + delete_usage_log(id) -&gt; bool                              │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ validates with
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    SchemaValidator                          │
+├─────────────────────────────────────────────────────────────┤
+│ - schemas: Dict[str, Dict]                                  │
+├─────────────────────────────────────────────────────────────┤
+│ + validate_message(message, schema) -&gt; Optional[str]        │
+│ + validate_initialize_request(message) -&gt; Optional[str]     │
+│ + validate_tool_call_request(message) -&gt; Optional[str]      │
+│ + validate_resource_read_request(message) -&gt; Optional[str]  │
+└─────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<h3 id="component-relationships">Component Relationships</h3>
+<ol>
+<li><strong>MCPServer</strong> ↔ <strong>DatabaseManager</strong>: Server uses database manager for all data operations</li>
+<li><strong>MCPClient</strong> → <strong>MCPServer</strong>: Client communicates with server via JSON-RPC 2.0</li>
+<li><strong>MCPServer</strong> → <strong>SchemaValidator</strong>: Server validates all incoming messages</li>
+<li><strong>DatabaseManager</strong> → <strong>SQLite</strong>: Direct database operations and connection management</li>
+<li><strong>MCPClient</strong> ↔ <strong>MCPServer</strong>: Bidirectional communication for tools and resources</li>
+</ol>
+<hr>
+<h2 id="5-deployment-instructions">5. Deployment Instructions</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.8 or higher</li>
+<li>pip package manager</li>
+<li>50MB available disk space</li>
+</ul>
+<h3 id="step-by-step-deployment">Step-by-Step Deployment</h3>
+<h4 id="step-1-clone-the-repository">Step 1: Clone the Repository</h4>
+<pre class="hljs"><code><div>git <span class="hljs-built_in">clone</span> https://github.com/yourusername/application_usage_mcp.git
+<span class="hljs-built_in">cd</span> application_usage_mcp
+</div></code></pre>
+<h4 id="step-2-install-dependencies">Step 2: Install Dependencies</h4>
+<pre class="hljs"><code><div>pip install -r requirements.txt
+</div></code></pre>
+<h4 id="step-3-start-the-server">Step 3: Start the Server</h4>
+<pre class="hljs"><code><div><span class="hljs-comment"># Option 1: Using the main entry point</span>
+python main.py
+
+<span class="hljs-comment"># Option 2: Using the example server script</span>
+python examples/start_server.py
+</div></code></pre>
+<h4 id="step-4-verify-server-is-running">Step 4: Verify Server is Running</h4>
+<pre class="hljs"><code><div><span class="hljs-comment"># In a new terminal, run the client example</span>
+python examples/client_usage.py
+</div></code></pre>
+<h4 id="step-5-configure-optional">Step 5: Configure (Optional)</h4>
+<p>Edit <code>config/settings.py</code> to customize:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Change server port</span>
+MCP_PORT = <span class="hljs-number">9000</span>
+
+<span class="hljs-comment"># Change database location</span>
+DB_PATH = <span class="hljs-string">"/path/to/your/database.db"</span>
+</div></code></pre>
+<h3 id="production-deployment">Production Deployment</h3>
+<h4 id="docker-deployment-recommended">Docker Deployment (Recommended)</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.11</span>-slim
+
+<span class="hljs-keyword">WORKDIR</span><span class="bash"> /app</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> . .</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> pip install -r requirements.txt</span>
+
+<span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">58888</span>
+<span class="hljs-keyword">CMD</span><span class="bash"> [<span class="hljs-string">"python"</span>, <span class="hljs-string">"main.py"</span>]</span>
+</div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># Build and run</span>
+docker build -t mcp-usage-tracker .
+docker run -p 58888:58888 -v $(<span class="hljs-built_in">pwd</span>)/data:/app/data mcp-usage-tracker
+</div></code></pre>
+<h4 id="systemd-service-linux">Systemd Service (Linux)</h4>
+<pre class="hljs"><code><div><span class="hljs-section">[Unit]</span>
+<span class="hljs-attr">Description</span>=MCP Usage Tracker
+<span class="hljs-attr">After</span>=network.target
+
+<span class="hljs-section">[Service]</span>
+<span class="hljs-attr">Type</span>=simple
+<span class="hljs-attr">User</span>=mcp-user
+<span class="hljs-attr">WorkingDirectory</span>=/opt/mcp-usage-tracker
+<span class="hljs-attr">ExecStart</span>=/usr/bin/python3 main.py
+<span class="hljs-attr">Restart</span>=always
+
+<span class="hljs-section">[Install]</span>
+<span class="hljs-attr">WantedBy</span>=multi-user.target
+</div></code></pre>
+<h3 id="health-check">Health Check</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># Test server connectivity</span>
+curl -X POST http://localhost:58888 \
+  -H <span class="hljs-string">"Content-Type: application/json"</span> \
+  -d <span class="hljs-string">'{"jsonrpc":"2.0","id":"1","method":"ping"}'</span>
+</div></code></pre>
+<hr>
+<h2 id="6-required-libraries">6. Required Libraries</h2>
+<h3 id="core-dependencies">Core Dependencies</h3>
+<pre class="hljs"><code><div>jsonschema&gt;=4.17.0          # JSON schema validation
+</div></code></pre>
+<h3 id="development-dependencies">Development Dependencies</h3>
+<pre class="hljs"><code><div>pytest&gt;=7.0.0               # Testing framework
+pytest-asyncio&gt;=0.21.0      # Async testing support
+pytest-cov&gt;=4.0.0           # Code coverage
+</div></code></pre>
+<h3 id="optional-dependencies">Optional Dependencies</h3>
+<pre class="hljs"><code><div>aiosqlite&gt;=0.19.0           # Async SQLite operations (future enhancement)
+python-dotenv&gt;=1.0.0        # Environment variable management
+</div></code></pre>
+<h3 id="python-standard-library-no-installation-required">Python Standard Library (No Installation Required)</h3>
+<pre class="hljs"><code><div>asyncio                     # Async programming
+json                       # JSON handling
+sqlite3                    # SQLite database
+logging                    # Logging system
+uuid                       # UUID generation
+datetime                   # Date/time operations
+typing                     # Type hints
+os                         # Operating system interface
+sys                        # System-specific parameters
+signal                     # Signal handling
+</div></code></pre>
+<h3 id="complete-requirementstxt">Complete requirements.txt</h3>
+<pre class="hljs"><code><div># Core dependencies
+jsonschema&gt;=4.17.0
+
+# Development dependencies
+pytest&gt;=7.0.0
+pytest-asyncio&gt;=0.21.0
+pytest-cov&gt;=4.0.0
+
+# Optional dependencies for enhanced features
+aiosqlite&gt;=0.19.0
+python-dotenv&gt;=1.0.0
+</div></code></pre>
+<h3 id="installation-commands">Installation Commands</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># Install core dependencies only</span>
+pip install jsonschema
+
+<span class="hljs-comment"># Install all dependencies including development tools</span>
+pip install -r requirements.txt
+
+<span class="hljs-comment"># Install with specific versions (production)</span>
+pip install jsonschema==4.17.0 pytest==7.0.0 pytest-asyncio==0.21.0
+</div></code></pre>
+<hr>
+<h2 id="7-sequence-flow">7. Sequence Flow</h2>
+<h3 id="71-system-initialization-flow">7.1 System Initialization Flow</h3>
+<pre class="hljs"><code><div>1. Application Startup
+   ├── Load configuration from config/settings.py
+   ├── Initialize logging system
+   ├── Create DatabaseManager instance
+   │   ├── Check if database exists
+   │   └── Initialize database tables
+   ├── Create MCPServer instance
+   │   ├── Load tool definitions
+   │   ├── Load resource definitions
+   │   └── Set up message handlers
+   └── Start TCP server on configured host/port
+</div></code></pre>
+<h3 id="72-client-connection--handshake-flow">7.2 Client Connection &amp; Handshake Flow</h3>
+<pre class="hljs"><code><div>1. Client Connection
+   ├── TCP connection established
+   ├── Client sends 'initialize' request
+   │   └── Includes: protocol version, capabilities, client info
+   ├── Server validates initialization request
+   ├── Server responds with capabilities
+   │   └── Includes: protocol version, server info, available tools/resources
+   ├── Client sends 'tools/list' request
+   ├── Server responds with tool definitions
+   ├── Client sends 'resources/list' request
+   ├── Server responds with resource definitions
+   └── Handshake complete - ready for operations
+</div></code></pre>
+<h3 id="73-database-write-operations-flow">7.3 Database Write Operations Flow</h3>
+<pre class="hljs"><code><div>1. Create Usage Log
+   ├── Client sends 'tools/call' request
+   │   ├── Method: &quot;tools/call&quot;
+   │   ├── Tool name: &quot;create_usage_log&quot;
+   │   └── Arguments: {monitor_app_version, platform, user, application_name, 
+   │                   application_version, log_date, legacy_app, duration_seconds}
+   ├── Server validates request against JSON schema
+   ├── Server extracts tool arguments
+   ├── DatabaseManager.create_usage_log() called
+   │   ├── Validate database connection
+   │   ├── Validate required fields for new schema
+   │   ├── Convert legacy_app boolean to 1/0 for SQLite
+   │   ├── Execute INSERT SQL statement
+   │   ├── Commit transaction
+   │   └── Return new log ID
+   ├── Server formats response with log ID
+   └── Client receives success response with log ID
+</div></code></pre>
+<h3 id="74-database-read-operations-flow">7.4 Database Read Operations Flow</h3>
+<pre class="hljs"><code><div>1. Retrieve Usage Logs
+   ├── Client sends 'tools/call' request
+   │   ├── Method: &quot;tools/call&quot;
+   │   ├── Tool name: &quot;get_usage_logs&quot;
+   │   └── Arguments: {filters: {application_name: &quot;chrome.exe&quot;}} (optional)
+   ├── Server validates request
+   ├── DatabaseManager.get_usage_logs() called
+   │   ├── Build SELECT query with WHERE clause (if filters)
+   │   ├── Execute query
+   │   ├── Convert rows to dictionaries
+   │   ├── Convert legacy_app from 1/0 to True/False
+   │   └── Return list of log entries
+   ├── Server formats response with log data
+   └── Client receives log entries
+</div></code></pre>
+<h3 id="75-database-update-operations-flow">7.5 Database Update Operations Flow</h3>
+<pre class="hljs"><code><div>1. Update Usage Log
+   ├── Client sends 'tools/call' request
+   │   ├── Tool name: &quot;update_usage_log&quot;
+   │   └── Arguments: {log_id: 123, updates: {user: &quot;new_user&quot;, duration_seconds: 7200}}
+   ├── Server validates request
+   ├── DatabaseManager.update_usage_log() called
+   │   ├── Build UPDATE SQL with SET clause
+   │   ├── Execute update with log_id WHERE clause
+   │   ├── Check if any rows were affected
+   │   └── Return success/failure boolean
+   ├── Server formats response
+   └── Client receives update result
+</div></code></pre>
+<h3 id="76-database-delete-operations-flow">7.6 Database Delete Operations Flow</h3>
+<pre class="hljs"><code><div>1. Delete Usage Log
+   ├── Client sends 'tools/call' request
+   │   ├── Tool name: &quot;delete_usage_log&quot;
+   │   └── Arguments: {log_id: 123}
+   ├── Server validates request
+   ├── DatabaseManager.delete_usage_log() called
+   │   ├── Execute DELETE SQL with WHERE clause
+   │   ├── Check if any rows were affected
+   │   └── Return success/failure boolean
+   ├── Server formats response
+   └── Client receives deletion result
+</div></code></pre>
+<h3 id="77-resource-reading-flow">7.7 Resource Reading Flow</h3>
+<pre class="hljs"><code><div>1. Read Usage Statistics
+   ├── Client sends 'resources/read' request
+   │   └── URI: &quot;usage://stats&quot;
+   ├── Server validates request
+   ├── Server calls get_usage_logs() to count total logs
+   ├── Server generates statistics object
+   │   ├── total_logs: count
+   │   ├── last_updated: current timestamp
+   │   └── summary: description
+   ├── Server formats resource response
+   │   ├── URI: original request URI
+   │   ├── mimeType: &quot;application/json&quot;
+   │   └── text: JSON-formatted statistics
+   └── Client receives statistics data
+</div></code></pre>
+<h3 id="78-error-handling-flow">7.8 Error Handling Flow</h3>
+<pre class="hljs"><code><div>1. Error Scenarios
+   ├── JSON Parse Error
+   │   ├── Invalid JSON received
+   │   ├── Server responds with -32700 error code
+   │   └── Connection remains open
+   ├── Invalid Request
+   │   ├── Missing required fields
+   │   ├── Server responds with -32600 error code
+   │   └── Request rejected
+   ├── Method Not Found
+   │   ├── Unknown tool or method
+   │   ├── Server responds with -32601 error code
+   │   └── Available methods logged
+   ├── Invalid Parameters
+   │   ├── Schema validation fails
+   │   ├── Server responds with -32602 error code
+   │   └── Validation error details included
+   └── Internal Error
+       ├── Database or server error
+       ├── Server responds with -32603 error code
+       ├── Error logged for debugging
+       └── Generic error message to client
+</div></code></pre>
+<h3 id="79-connection-lifecycle-flow">7.9 Connection Lifecycle Flow</h3>
+<pre class="hljs"><code><div>1. Connection Management
+   ├── Connection Established
+   │   ├── TCP socket created
+   │   ├── Client address logged
+   │   └── Handshake initiated
+   ├── Active Session
+   │   ├── Message processing loop
+   │   ├── Request/response cycles
+   │   └── Error handling
+   ├── Graceful Shutdown
+   │   ├── Client closes connection
+   │   ├── Server detects connection closure
+   │   ├── Cleanup resources
+   │   └── Log connection closure
+   └── Error Shutdown
+       ├── Network error or exception
+       ├── Server catches exception
+       ├── Force close connection
+       ├── Log error details
+       └── Cleanup resources
+</div></code></pre>
+<hr>
+<h2 id="additional-resources">Additional Resources</h2>
+<ul>
+<li><strong>API Examples</strong>: <code>examples/client_usage.py</code></li>
+<li><strong>Server Startup</strong>: <code>examples/start_server.py</code></li>
+<li><strong>Configuration Guide</strong>: <code>config/settings.py</code></li>
+<li><strong>Database Schema</strong>: <code>database/schema.sql</code></li>
+</ul>
+<hr>
+<p><strong>Status</strong>: ✅ Production Ready | <strong>Protocol Version</strong>: 2024-11-05 | <strong>Last Updated</strong>: July 27, 2025</p>
 
 </body>
 </html>

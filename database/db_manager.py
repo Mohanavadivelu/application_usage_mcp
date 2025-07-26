@@ -55,13 +55,32 @@ class DatabaseManager:
             raise
 
     def create_usage_log(self, log_data: dict):
-        columns = ', '.join(log_data.keys())
-        placeholders = ', '.join('?' for _ in log_data)
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+        
+        # Validate required fields for new schema
+        required_fields = ['monitor_app_version', 'platform', 'user', 'application_name', 
+                          'application_version', 'log_date', 'legacy_app', 'duration_seconds']
+        
+        missing_fields = [field for field in required_fields if field not in log_data]
+        if missing_fields:
+            self.logger.error(f"Missing required fields: {missing_fields}")
+            return None
+            
+        # Ensure legacy_app is properly formatted as boolean
+        processed_data = log_data.copy()
+        if 'legacy_app' in processed_data:
+            # Convert to 1/0 for SQLite boolean storage
+            processed_data['legacy_app'] = 1 if processed_data['legacy_app'] else 0
+            
+        columns = ', '.join(processed_data.keys())
+        placeholders = ', '.join('?' for _ in processed_data)
         sql = f"INSERT INTO usage_data ({columns}) VALUES ({placeholders})"
         try:
             with self.conn:
                 cursor = self.conn.cursor()
-                cursor.execute(sql, list(log_data.values()))
+                cursor.execute(sql, list(processed_data.values()))
                 self.conn.commit()
                 self.logger.info(f"New usage log created with ID: {cursor.lastrowid}")
                 return cursor.lastrowid
@@ -73,6 +92,10 @@ class DatabaseManager:
             return None
 
     def get_usage_logs(self, filters: dict = None):
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
         sql = "SELECT * FROM usage_data"
         params = []
         if filters:
@@ -88,12 +111,27 @@ class DatabaseManager:
                 cursor.execute(sql, params)
                 rows = cursor.fetchall()
                 self.logger.info(f"Retrieved {len(rows)} usage logs.")
-                return [dict(row) for row in rows]
+                
+                # Convert rows to dict and handle boolean conversion
+                result = []
+                for row in rows:
+                    row_dict = dict(row)
+                    # Convert legacy_app from 1/0 to True/False
+                    if 'legacy_app' in row_dict:
+                        row_dict['legacy_app'] = bool(row_dict['legacy_app'])
+                    result.append(row_dict)
+                return result
         except sqlite3.Error as e:
+            self.logger.error(f"Error retrieving usage logs: {e}")
+            return []
             self.logger.error(f"Error retrieving usage logs: {e}")
             return []
 
     def update_usage_log(self, log_id: int, updates: dict):
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
         if not updates:
             self.logger.warning("No update data provided.")
             return False
@@ -117,6 +155,10 @@ class DatabaseManager:
             return False
 
     def delete_usage_log(self, log_id: int):
+        # Ensure connection is available
+        if self.conn is None:
+            self.connect()
+            
         sql = "DELETE FROM usage_data WHERE id = ?"
         try:
             with self.conn:

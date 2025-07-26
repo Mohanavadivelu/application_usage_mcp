@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Initialize Request",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string",
+      "const": "initialize"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "type": "object"
+            },
+            "resources": {
+              "type": "object"
+            }
+          }
+        },
+        "clientInfo": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": ["name", "version"]
+        }
+      },
+      "required": ["protocolVersion", "capabilities", "clientInfo"]
+    }
+  },
+  "required": ["jsonrpc", "id", "method", "params"]
+}

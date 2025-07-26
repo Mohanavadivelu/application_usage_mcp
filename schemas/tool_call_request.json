@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tool Call Request",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string",
+      "const": "tools/call"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "object"
+        }
+      },
+      "required": ["name"]
+    }
+  },
+  "required": ["jsonrpc", "id", "method", "params"]
+}

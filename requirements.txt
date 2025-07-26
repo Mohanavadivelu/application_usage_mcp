@@ -1,0 +1,12 @@
+# Core dependencies
+asyncio-mqtt>=0.11.0
+jsonschema>=4.17.0
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Optional dependencies for enhanced features
+aiosqlite>=0.19.0  # For async database operations
+python-dotenv>=1.0.0  # For environment configuration
