@@ -128,6 +128,8 @@ class DatabaseManager:
         
         This method validates all required fields according to the database schema,
         handles boolean conversion for SQLite compatibility, and inserts the record.
+        If a record with the same date, user, and application_name already exists,
+        it will update the existing record by adding the new duration to the existing duration.
         
         Required fields in log_data:
             - monitor_app_version (str): Version of monitoring tool
@@ -135,7 +137,7 @@ class DatabaseManager:
             - user (str): Username or device identifier
             - application_name (str): Name of the application (e.g., chrome.exe)
             - application_version (str): Version of the application
-            - log_date (str): ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)
+            - log_date (str): Date in YYYY-MM-DD format
             - legacy_app (bool): Whether application is considered legacy
             - duration_seconds (int): Usage duration in seconds
         
@@ -143,7 +145,7 @@ class DatabaseManager:
             log_data (dict): Dictionary containing all required usage log fields
             
         Returns:
-            int: ID of the newly created log entry, or None if creation failed
+            int: ID of the newly created or updated log entry, or None if operation failed
             
         Raises:
             sqlite3.IntegrityError: If data violates database constraints
@@ -167,17 +169,60 @@ class DatabaseManager:
         if 'legacy_app' in processed_data:
             # Convert to 1/0 for SQLite boolean storage
             processed_data['legacy_app'] = 1 if processed_data['legacy_app'] else 0
-            
-        columns = ', '.join(processed_data.keys())
-        placeholders = ', '.join('?' for _ in processed_data)
-        sql = f"INSERT INTO usage_data ({columns}) VALUES ({placeholders})"
+
         try:
             with self.conn:
                 cursor = self.conn.cursor()
-                cursor.execute(sql, list(processed_data.values()))
-                self.conn.commit()
-                self.logger.info(f"New usage log created with ID: {cursor.lastrowid}")
-                return cursor.lastrowid
+                
+                # Check if a record with same date, user, and application_name exists
+                check_sql = """
+                    SELECT id, duration_seconds FROM usage_data 
+                    WHERE log_date = ? AND user = ? AND application_name = ?
+                """
+                cursor.execute(check_sql, (
+                    processed_data['log_date'], 
+                    processed_data['user'], 
+                    processed_data['application_name']
+                ))
+                existing_record = cursor.fetchone()
+                
+                if existing_record:
+                    # Update existing record by adding duration
+                    existing_id = existing_record['id']
+                    existing_duration = existing_record['duration_seconds']
+                    new_duration = existing_duration + processed_data['duration_seconds']
+                    
+                    # Also update other fields from the new data
+                    update_sql = """
+                        UPDATE usage_data 
+                        SET duration_seconds = ?, 
+                            monitor_app_version = ?,
+                            platform = ?,
+                            application_version = ?,
+                            legacy_app = ?
+                        WHERE id = ?
+                    """
+                    cursor.execute(update_sql, (
+                        new_duration,
+                        processed_data['monitor_app_version'],
+                        processed_data['platform'],
+                        processed_data['application_version'],
+                        processed_data['legacy_app'],
+                        existing_id
+                    ))
+                    
+                    self.logger.info(f"Updated existing usage log ID {existing_id}. Duration increased from {existing_duration} to {new_duration} seconds.")
+                    return existing_id
+                else:
+                    # Insert new record
+                    columns = ', '.join(processed_data.keys())
+                    placeholders = ', '.join('?' for _ in processed_data)
+                    sql = f"INSERT INTO usage_data ({columns}) VALUES ({placeholders})"
+                    cursor.execute(sql, list(processed_data.values()))
+                    
+                    self.logger.info(f"New usage log created with ID: {cursor.lastrowid}")
+                    return cursor.lastrowid
+                    
         except sqlite3.IntegrityError as e:
             self.logger.error(f"Integrity error creating usage log: {e}")
             return None
