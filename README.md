@@ -22,12 +22,16 @@ The **Application Usage MCP System** is a production-ready implementation of the
 The easiest way to test and explore all MCP functionality is through the interactive client:
 
 ```bash
-# 1. Start the MCP server (in one terminal)
-cd examples
+# 1. Generate demo data (optional - creates 50K realistic records)
+cd demo_data
+python generate_demo_data.py
+
+# 2. Start the MCP server (in one terminal)
+cd ../mcp
 python start_server.py
 
-# 2. Run the interactive client (in another terminal)
-cd examples
+# 3. Run the interactive client (in another terminal)
+cd ../examples
 python interactive_client.py
 ```
 
@@ -56,6 +60,25 @@ The interactive client provides a menu-driven interface to test all MCP tools:
 ### 📋 Manual Testing
 
 The interactive client includes comprehensive automated testing options (menu option 🧪).
+
+### 🎲 Demo Data Generation
+
+For comprehensive testing with realistic data, use the demo data generator:
+
+```bash
+cd demo_data
+python generate_demo_data.py
+```
+
+This creates:
+- **50,000 usage records** spanning 2 years (July 2023 - July 2025)
+- **150 users** with realistic activity patterns (developers, admins, designers, managers, analysts)
+- **5 applications** across different categories (browsers, development tools, communication)
+- **All platforms** with realistic distribution (Windows 60%, macOS 25%, Linux 10%, Android 3%, iOS 2%)
+- **Seasonal patterns** including weekends, holidays, and vacation periods
+- **Realistic session durations** based on application types
+
+The generated data is perfect for testing all analytics features and understanding system capabilities.
 
 ### 📚 Documentation
 
@@ -97,6 +120,10 @@ application_usage_mcp/
 └── examples/                          # Usage examples and utilities
     ├── start_server.py                # Server startup script
     └── interactive_client.py          # Interactive CLI for testing all tools
+
+└── demo_data/                         # Demo data generation tools
+    ├── generate_demo_data.py          # Main demo data generator (50K records)
+    └── test_analytics.py              # Analytics function tester
 ```
 
 ### Folder Purposes:
@@ -106,6 +133,7 @@ application_usage_mcp/
 - **`mcp/`**: Core MCP protocol implementation (server and client)
 - **`schemas/`**: JSON schema definitions for request validation
 - **`examples/`**: Practical usage examples and helper scripts
+- **`demo_data/`**: Demo data generation tools for testing with realistic data (50K records)
 
 ---
 
