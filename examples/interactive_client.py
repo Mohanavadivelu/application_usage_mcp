@@ -111,7 +111,7 @@ class InteractiveMCPClient:
             "monitor_app_version": self.get_user_input("Monitor App Version", str, "1.0.0"),
             "platform": self.get_user_input("Platform (Windows/macOS/Linux/Android)", str, "Windows"),
             "user": self.get_user_input("User", str, f"user_{datetime.now().strftime('%H%M%S')}"),
-            "application_name": self.get_user_input("Application Name", str, "chrome.exe"),
+            "application_name": self.get_user_input("Application Name", str, "chrome"),
             "application_version": self.get_user_input("Application Version", str, "120.0.0"),
             "log_date": self.get_user_input("Log Date (YYYY-MM-DD)", str, datetime.now().strftime("%Y-%m-%d")),
             "legacy_app": self.get_user_input("Legacy App (true/false)", bool, False),
@@ -296,7 +296,7 @@ class InteractiveMCPClient:
             "monitor_app_version": "1.0.0",
             "platform": "Windows",
             "user": "test_aggregate_user",
-            "application_name": "test_app.exe",
+            "application_name": "test_app",
             "application_version": "1.0.0",
             "log_date": datetime.now().strftime("%Y-%m-%d"),
             "legacy_app": False,
@@ -324,7 +324,7 @@ class InteractiveMCPClient:
             # Verify aggregation
             logs = await self.client.get_usage_logs({
                 "user": "test_aggregate_user", 
-                "application_name": "test_app.exe"
+                "application_name": "test_app"
             })
             
             if logs and len(logs) == 1:
@@ -379,7 +379,7 @@ class InteractiveMCPClient:
                 "monitor_app_version": "1.0.0",
                 "platform": "Windows",
                 "user": "auto_test_user1",
-                "application_name": "chrome.exe",
+                "application_name": "chrome",
                 "application_version": "120.0.0",
                 "log_date": datetime.now().strftime("%Y-%m-%d"),
                 "legacy_app": False,
@@ -389,7 +389,7 @@ class InteractiveMCPClient:
                 "monitor_app_version": "1.0.0",
                 "platform": "macOS",
                 "user": "auto_test_user2",
-                "application_name": "firefox.exe",
+                "application_name": "firefox",
                 "application_version": "118.0.0",
                 "log_date": datetime.now().strftime("%Y-%m-%d"),
                 "legacy_app": True,
@@ -455,7 +455,7 @@ class InteractiveMCPClient:
         print("\n📊 TOP USERS ANALYSIS")
         print("-" * 40)
         
-        app_name = self.get_user_input("Application Name", str, "chrome.exe")
+        app_name = self.get_user_input("Application Name", str, "chrome")
         limit = self.get_user_input("Number of users to show", int, 10)
         
         result = await self.client.get_top_users_analysis(app_name, limit)
