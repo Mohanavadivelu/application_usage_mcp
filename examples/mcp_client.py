@@ -207,12 +207,28 @@ class MCPClient:
             self.writer.write(message.encode())
             await self.writer.drain()
 
-            data = await self.reader.read(4096)
-            if not data:
+            # Read the response properly, handling large responses
+            response_data = b""
+            while True:
+                chunk = await self.reader.read(4096)
+                if not chunk:
+                    break
+                response_data += chunk
+                
+                # Try to parse the JSON to see if we have a complete message
+                try:
+                    response = json.loads(response_data.decode())
+                    logger.debug(f"Received: {response}")
+                    return response
+                except json.JSONDecodeError:
+                    # Not a complete JSON yet, continue reading
+                    continue
+
+            if not response_data:
                 logger.error("No response from server")
                 return None
 
-            response = json.loads(data.decode())
+            response = json.loads(response_data.decode())
             logger.debug(f"Received: {response}")
             return response
 
